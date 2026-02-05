@@ -7,10 +7,10 @@
     <license type="file">LICENSE.txt</license>
     <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
     <readme>README.md</readme>
-    <projectUrl>https://nrgid.com/</projectUrl>
+    <projectUrl>https://github.com/NrgId/enjson-translations-dotnet</projectUrl>
     <description>Translation provider and DI extensions for loading translations from enjson.com (NrgId platform).</description>
     <tags>nrgid enjson translations localization tms i18n</tags>
-    <repository type="git" url="https://nrgid.com" />
+    <repository type="git" url="https://github.com/NrgId/enjson-translations-dotnet" commit="4b9f370c724e01bff866935e1812e19567993d28" />
     <dependencies>
       <group targetFramework=".NETStandard2.0">
         <dependency id="Microsoft.Extensions.Caching.Memory" version="5.0.0" exclude="Build,Analyzers" />

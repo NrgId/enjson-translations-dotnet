@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Translation provider and DI extensions for loading translations from enjson.com (" +
     "NrgId platform)."))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1646e528a0ab2a5b0b52dbbcaa2077ed90e56ce5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b9f370c724e01bff866935e1812e19567993d28")]
 [assembly: System.Reflection.AssemblyProductAttribute("NrgId.EnJson.Translations")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NrgId.EnJson.Translations")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -23,3 +23,4 @@ C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\obj\Release\netstandar
 C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\obj\Release\netstandard2.0\NrgId.EnJson.Translations.dll
 C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\obj\Release\netstandard2.0\NrgId.EnJson.Translations.xml
 C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\obj\Release\netstandard2.0\NrgId.EnJson.Translations.pdb
+C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\obj\Release\netstandard2.0\NrgId.EnJson.Translations.sourcelink.json
