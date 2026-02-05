@@ -1,0 +1,5 @@
+Copyright (c) 2026 NrgId
+All rights reserved.
+
+This package is proprietary and may be used only in accordance with a separate
+commercial license agreement with NrgId.

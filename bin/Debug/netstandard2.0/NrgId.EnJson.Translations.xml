@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>NrgId.EnJson.Translations</name>
+    </assembly>
+    <members>
+        <member name="T:NrgId.EnJson.Translations.EnjsonTranslationProvider">
+            <summary>
+            Enjson implementation of <see cref="T:NrgId.EnJson.Translations.IExternalTranslationProvider"/>.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonTranslationProvider.#ctor(System.Net.Http.HttpClient,Microsoft.Extensions.Caching.Memory.IMemoryCache,Microsoft.Extensions.Options.IOptions{NrgId.EnJson.Translations.EnjsonTranslationsOptions},NrgId.EnJson.Translations.IEnjsonUsageTracker)">
+            <summary>
+            Creates a new translation provider.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonTranslationProvider.GetTranslationResultAsync(System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonTranslationProvider.GetTranslationAsync(System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:NrgId.EnJson.Translations.EnjsonTranslationResult">
+            <summary>
+            Result of a translation lookup.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonTranslationResult.#ctor(System.String,System.String,System.Boolean,System.String)">
+            <summary>
+            Creates a new translation result.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationResult.Key">
+            <summary>
+            Translation key.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationResult.Value">
+            <summary>
+            Translated value if found.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationResult.Found">
+            <summary>
+            Whether the translation was found.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationResult.ErrorCode">
+            <summary>
+            Optional error code when request fails.
+            </summary>
+        </member>
+        <member name="T:NrgId.EnJson.Translations.EnjsonTranslationsOptions">
+            <summary>
+            Configuration options for Enjson translations.
+            </summary>
+        </member>
+        <member name="F:NrgId.EnJson.Translations.EnjsonTranslationsOptions.SectionName">
+            <summary>
+            Configuration section name for Enjson translations.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.BaseUrl">
+            <summary>
+            Base API URL for the Enjson service.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.ProjectId">
+            <summary>
+            Enjson Project ID.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.CacheMinutes">
+            <summary>
+            Cache duration in minutes.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.HttpTimeoutSeconds">
+            <summary>
+            HTTP timeout in seconds.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.DefaultLocale">
+            <summary>
+            Default locale used when none is provided.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.NamespaceDepth">
+            <summary>
+            Namespace depth used when parsing keys like "emails.user.created".
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.LocalFallbackPath">
+            <summary>
+            Optional local fallback file path (e.g. Resources/en.json).
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.EnableUsageTracking">
+            <summary>
+            Enables usage tracking to update last-used timestamps.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.UsageReportIntervalMinutes">
+            <summary>
+            Usage reporting interval in minutes.
+            </summary>
+        </member>
+        <member name="P:NrgId.EnJson.Translations.EnjsonTranslationsOptions.UsageReportBatchSize">
+            <summary>
+            Max number of keys per usage reporting batch.
+            </summary>
+        </member>
+        <member name="T:NrgId.EnJson.Translations.IEnjsonUsageTracker">
+            <summary>
+            Tracks translation key usage for reporting.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.IEnjsonUsageTracker.Track(System.String)">
+            <summary>
+            Records usage for the given full key.
+            </summary>
+        </member>
+        <member name="T:NrgId.EnJson.Translations.EnjsonUsageTracker">
+            <summary>
+            Default implementation of <see cref="T:NrgId.EnJson.Translations.IEnjsonUsageTracker"/>.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonUsageTracker.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Options.IOptions{NrgId.EnJson.Translations.EnjsonTranslationsOptions})">
+            <summary>
+            Creates a new usage tracker.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonUsageTracker.Track(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:NrgId.EnJson.Translations.EnjsonUsageTracker.Dispose">
+            <summary>
+            Disposes timer resources.
+            </summary>
+        </member>
+        <member name="T:NrgId.EnJson.Translations.IExternalTranslationProvider">
+            <summary>
+            Provides translations from enjson.com.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.IExternalTranslationProvider.GetTranslationResultAsync(System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets a translation and result metadata.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.IExternalTranslationProvider.GetTranslationAsync(System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets a translation for the specified locale and key.
+            </summary>
+        </member>
+        <member name="T:NrgId.EnJson.Translations.ServiceCollectionExtensions">
+            <summary>
+            DI registration extensions for Enjson translations.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.ServiceCollectionExtensions.AddEnjsonTranslations(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Registers Enjson translations with memory cache and HTTP client support.
+            </summary>
+        </member>
+        <member name="M:NrgId.EnJson.Translations.ServiceCollectionExtensions.AddEnjsonTranslations(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{NrgId.EnJson.Translations.EnjsonTranslationsOptions})">
+            <summary>
+            Registers Enjson translations with programmatic configuration.
+            </summary>
+        </member>
+    </members>
+</doc>

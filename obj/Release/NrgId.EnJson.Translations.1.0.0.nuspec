@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>NrgId.EnJson.Translations</id>
+    <version>1.0.0</version>
+    <authors>NrgId</authors>
+    <license type="file">LICENSE.txt</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <readme>README.md</readme>
+    <projectUrl>https://nrgid.com/</projectUrl>
+    <description>Translation provider and DI extensions for loading translations from enjson.com (NrgId platform).</description>
+    <tags>nrgid enjson translations localization tms i18n</tags>
+    <repository type="git" url="https://nrgid.com" />
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Http" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Options" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Options.ConfigurationExtensions" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Net.Http.Json" version="5.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\bin\Release\netstandard2.0\NrgId.EnJson.Translations.dll" target="lib\netstandard2.0\NrgId.EnJson.Translations.dll" />
+    <file src="C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\bin\Release\netstandard2.0\NrgId.EnJson.Translations.xml" target="lib\netstandard2.0\NrgId.EnJson.Translations.xml" />
+    <file src="C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\README.md" target="\README.md" />
+    <file src="C:\Git\NrgNorge\enjson\packages\NrgId.EnJson.Translations\LICENSE.txt" target="\LICENSE.txt" />
+  </files>
+</package>
