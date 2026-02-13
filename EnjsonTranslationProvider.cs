@@ -1,28 +1,30 @@
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using NrgId.EnJson.Translations.Core;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    /// Enjson implementation of <see cref="IExternalTranslationProvider"/>.
+    ///     Enjson implementation of <see cref="IExternalTranslationProvider" />.
     /// </summary>
     public class EnjsonTranslationProvider : IExternalTranslationProvider
     {
-        private readonly HttpClient _http;
         private readonly IMemoryCache _cache;
+        private readonly HttpClient _http;
         private readonly EnjsonTranslationsOptions _options;
         private readonly IEnjsonUsageTracker _usageTracker;
 
         /// <summary>
-        /// Creates a new translation provider.
+        ///     Creates a new translation provider.
         /// </summary>
         public EnjsonTranslationProvider(
             HttpClient http,
@@ -35,8 +37,8 @@ namespace NrgId.EnJson.Translations
             _options = options.Value;
             _usageTracker = usageTracker;
 
-            if (!string.IsNullOrWhiteSpace(_options.LocalFallbackPath) && !System.IO.File.Exists(_options.LocalFallbackPath))
-                throw new ArgumentException("enjson_fallback_not_found", nameof(_options.LocalFallbackPath));
+            if (!string.IsNullOrWhiteSpace(_options.LocalFallbackPath) && !File.Exists(_options.LocalFallbackPath))
+                throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPath));
         }
 
         /// <inheritdoc />
@@ -48,22 +50,24 @@ namespace NrgId.EnJson.Translations
             CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(locale))
-                throw new ArgumentException("enjson_missing_locale", nameof(locale));
+                throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
 
             if (string.IsNullOrWhiteSpace(key))
                 return new EnjsonTranslationResult(string.Empty, null, false);
 
             if (string.IsNullOrWhiteSpace(_options.ProjectId))
-                throw new ArgumentException("enjson_missing_project_id", nameof(_options.ProjectId));
+                throw new ArgumentException(ErrorMessages.EnJsonMissingProjectId, nameof(_options.ProjectId));
 
-            var hasInlineNamespace = TrySplitKey(key, _options.NamespaceDepth, out var parsedNamespace, out var parsedKey);
+            var hasInlineNamespace =
+                TrySplitKey(key, _options.NamespaceDepth, out var parsedNamespace, out _);
+
             if (!string.IsNullOrWhiteSpace(cacheNamespace))
             {
                 if (!hasInlineNamespace)
-                    throw new ArgumentException("enjson_key_missing_namespace", nameof(key));
+                    throw new ArgumentException(ErrorMessages.EnJsonKeyMissingNamespace, nameof(key));
 
                 if (!string.Equals(parsedNamespace, cacheNamespace, StringComparison.OrdinalIgnoreCase))
-                    throw new ArgumentException("enjson_namespace_mismatch", nameof(key));
+                    throw new ArgumentException(ErrorMessages.EnJsonNamespaceMismatch, nameof(key));
             }
 
             var effectiveNamespace = cacheNamespace ?? (hasInlineNamespace ? parsedNamespace : null);
@@ -82,7 +86,7 @@ namespace NrgId.EnJson.Translations
                 if (TryGetLocalFallbackValue(fullKeyForTracking, out var localValue))
                     return new EnjsonTranslationResult(fullKeyForTracking, localValue, true);
 
-                return new EnjsonTranslationResult(fullKeyForTracking, null, false, "enjson_request_failed");
+                return new EnjsonTranslationResult(fullKeyForTracking, null, false, ErrorMessages.EnJsonRequestFailed);
             }
 
             if (dict.TryGetValue(fullKeyForTracking, out var value) && !string.IsNullOrWhiteSpace(value))
@@ -102,7 +106,8 @@ namespace NrgId.EnJson.Translations
             string? cacheNamespace = null,
             CancellationToken ct = default)
         {
-            var result = await GetTranslationResultAsync(key, locale, customGroup, cacheNamespace, ct).ConfigureAwait(false);
+            var result = await GetTranslationResultAsync(key, locale, customGroup, cacheNamespace, ct)
+                .ConfigureAwait(false);
             return result.Found ? result.Value : result.Key;
         }
 
@@ -125,14 +130,13 @@ namespace NrgId.EnJson.Translations
                 .Append("/translations?language=")
                 .Append(Uri.EscapeDataString(locale))
                 .Append("&fallbackLanguage=en");
+
             if (!string.IsNullOrWhiteSpace(@namespace))
-            {
                 urlBuilder.Append("&namespace=").Append(Uri.EscapeDataString(@namespace));
-            }
+
             if (!string.IsNullOrWhiteSpace(customGroup))
-            {
                 urlBuilder.Append("&customGroup=").Append(Uri.EscapeDataString(customGroup));
-            }
+
             var url = urlBuilder.ToString();
 
             var dict = await _http.GetFromJsonAsync<Dictionary<string, string>>(url, ct)
@@ -182,10 +186,9 @@ namespace NrgId.EnJson.Translations
 
             var cacheKey = $"enjson:fallback:{_options.LocalFallbackPath}";
             if (!_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) || cached == null)
-            {
                 try
                 {
-                    var json = System.IO.File.ReadAllText(_options.LocalFallbackPath);
+                    var json = File.ReadAllText(_options.LocalFallbackPath);
                     var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
                                ?? new Dictionary<string, string>();
                     cached = dict;
@@ -198,10 +201,8 @@ namespace NrgId.EnJson.Translations
                 {
                     return false;
                 }
-            }
 
             return cached.TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value);
         }
     }
-
 }

@@ -6,14 +6,14 @@ using Microsoft.Extensions.Options;
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    /// DI registration extensions for Enjson translations.
+    ///     DI registration extensions for Enjson translations.
     /// </summary>
     public static class ServiceCollectionExtensions
     {
         internal const string EnjsonHttpClientName = "EnjsonTranslations";
 
         /// <summary>
-        /// Registers Enjson translations with memory cache and HTTP client support.
+        ///     Registers Enjson translations with memory cache and HTTP client support.
         /// </summary>
         public static IServiceCollection AddEnjsonTranslations(
             this IServiceCollection services,
@@ -42,7 +42,7 @@ namespace NrgId.EnJson.Translations
         }
 
         /// <summary>
-        /// Registers Enjson translations with programmatic configuration.
+        ///     Registers Enjson translations with programmatic configuration.
         /// </summary>
         public static IServiceCollection AddEnjsonTranslations(
             this IServiceCollection services,

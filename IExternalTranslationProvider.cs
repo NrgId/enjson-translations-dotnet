@@ -1,16 +1,15 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    /// Provides translations from enjson.com.
+    ///     Provides translations from enjson.com.
     /// </summary>
     public interface IExternalTranslationProvider
     {
         /// <summary>
-        /// Gets a translation and result metadata.
+        ///     Gets a translation and result metadata.
         /// </summary>
         Task<EnjsonTranslationResult> GetTranslationResultAsync(
             string key,
@@ -21,7 +20,7 @@ namespace NrgId.EnJson.Translations
         );
 
         /// <summary>
-        /// Gets a translation for the specified locale and key.
+        ///     Gets a translation for the specified locale and key.
         /// </summary>
         Task<string?> GetTranslationAsync(
             string key,

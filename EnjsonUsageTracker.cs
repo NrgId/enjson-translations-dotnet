@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -11,30 +10,32 @@ using Microsoft.Extensions.Options;
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    /// Tracks translation key usage for reporting.
+    ///     Tracks translation key usage for reporting.
     /// </summary>
     public interface IEnjsonUsageTracker
     {
         /// <summary>
-        /// Records usage for the given full key.
+        ///     Records usage for the given full key.
         /// </summary>
         void Track(string? fullKey);
     }
 
     /// <summary>
-    /// Default implementation of <see cref="IEnjsonUsageTracker"/>.
+    ///     Default implementation of <see cref="IEnjsonUsageTracker" />.
     /// </summary>
     public sealed class EnjsonUsageTracker : IEnjsonUsageTracker, IDisposable
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly EnjsonTranslationsOptions _options;
+
         private readonly ConcurrentDictionary<string, byte> _pending =
             new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+
         private readonly Timer? _timer;
         private int _isFlushing;
 
         /// <summary>
-        /// Creates a new usage tracker.
+        ///     Creates a new usage tracker.
         /// </summary>
         public EnjsonUsageTracker(
             IHttpClientFactory httpClientFactory,
@@ -44,11 +45,17 @@ namespace NrgId.EnJson.Translations
             _options = options.Value;
 
             if (_options.EnableUsageTracking && _options.UsageReportIntervalMinutes > 0)
-            {
                 _timer = new Timer(_ => _ = FlushAsync(), null,
                     TimeSpan.FromMinutes(_options.UsageReportIntervalMinutes),
                     TimeSpan.FromMinutes(_options.UsageReportIntervalMinutes));
-            }
+        }
+
+        /// <summary>
+        ///     Disposes timer resources.
+        /// </summary>
+        public void Dispose()
+        {
+            _timer?.Dispose();
         }
 
         /// <inheritdoc />
@@ -104,14 +111,6 @@ namespace NrgId.EnJson.Translations
             {
                 Interlocked.Exchange(ref _isFlushing, 0);
             }
-        }
-
-        /// <summary>
-        /// Disposes timer resources.
-        /// </summary>
-        public void Dispose()
-        {
-            _timer?.Dispose();
         }
     }
 }

@@ -1,12 +1,12 @@
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    /// Result of a translation lookup.
+    ///     Result of a translation lookup.
     /// </summary>
     public sealed class EnjsonTranslationResult
     {
         /// <summary>
-        /// Creates a new translation result.
+        ///     Creates a new translation result.
         /// </summary>
         public EnjsonTranslationResult(string key, string? value, bool found, string? errorCode = null)
         {
@@ -17,19 +17,22 @@ namespace NrgId.EnJson.Translations
         }
 
         /// <summary>
-        /// Translation key.
+        ///     Translation key.
         /// </summary>
         public string Key { get; }
+
         /// <summary>
-        /// Translated value if found.
+        ///     Translated value if found.
         /// </summary>
         public string? Value { get; }
+
         /// <summary>
-        /// Whether the translation was found.
+        ///     Whether the translation was found.
         /// </summary>
         public bool Found { get; }
+
         /// <summary>
-        /// Optional error code when request fails.
+        ///     Optional error code when request fails.
         /// </summary>
         public string? ErrorCode { get; }
     }
