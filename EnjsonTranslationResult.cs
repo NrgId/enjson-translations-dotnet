@@ -3,12 +3,12 @@ namespace NrgId.EnJson.Translations
     /// <summary>
     ///     Result of a translation lookup.
     /// </summary>
-    public sealed class EnjsonTranslationResult
+    public sealed class EnJsonTranslationResult
     {
         /// <summary>
         ///     Creates a new translation result.
         /// </summary>
-        public EnjsonTranslationResult(string key, string? value, bool found, string? errorCode = null)
+        public EnJsonTranslationResult(string key, string? value, bool found, string? errorCode = null)
         {
             Key = key;
             Value = value;

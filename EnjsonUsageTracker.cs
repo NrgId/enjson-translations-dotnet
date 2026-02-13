@@ -12,7 +12,7 @@ namespace NrgId.EnJson.Translations
     /// <summary>
     ///     Tracks translation key usage for reporting.
     /// </summary>
-    public interface IEnjsonUsageTracker
+    public interface IEnJsonUsageTracker
     {
         /// <summary>
         ///     Records usage for the given full key.
@@ -21,12 +21,12 @@ namespace NrgId.EnJson.Translations
     }
 
     /// <summary>
-    ///     Default implementation of <see cref="IEnjsonUsageTracker" />.
+    ///     Default implementation of <see cref="IEnJsonUsageTracker" />.
     /// </summary>
-    public sealed class EnjsonUsageTracker : IEnjsonUsageTracker, IDisposable
+    public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly EnjsonTranslationsOptions _options;
+        private readonly EnJsonTranslationsOptions _options;
 
         private readonly ConcurrentDictionary<string, byte> _pending =
             new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
@@ -37,9 +37,9 @@ namespace NrgId.EnJson.Translations
         /// <summary>
         ///     Creates a new usage tracker.
         /// </summary>
-        public EnjsonUsageTracker(
+        public EnJsonUsageTracker(
             IHttpClientFactory httpClientFactory,
-            IOptions<EnjsonTranslationsOptions> options)
+            IOptions<EnJsonTranslationsOptions> options)
         {
             _httpClientFactory = httpClientFactory;
             _options = options.Value;
@@ -94,7 +94,7 @@ namespace NrgId.EnJson.Translations
                     translationKeys = batch
                 };
 
-                var client = _httpClientFactory.CreateClient(ServiceCollectionExtensions.EnjsonHttpClientName);
+                var client = _httpClientFactory.CreateClient(ServiceCollectionExtensions.EnJsonHttpClientName);
                 var response = await client.PostAsJsonAsync(url, payload).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)

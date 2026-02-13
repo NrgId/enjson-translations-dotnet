@@ -6,35 +6,35 @@ using Microsoft.Extensions.Options;
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    ///     DI registration extensions for Enjson translations.
+    ///     DI registration extensions for EnJson translations.
     /// </summary>
     public static class ServiceCollectionExtensions
     {
-        internal const string EnjsonHttpClientName = "EnjsonTranslations";
+        internal const string EnJsonHttpClientName = "EnJsonTranslations";
 
         /// <summary>
-        ///     Registers Enjson translations with memory cache and HTTP client support.
+        ///     Registers EnJson translations with memory cache and HTTP client support.
         /// </summary>
-        public static IServiceCollection AddEnjsonTranslations(
+        public static IServiceCollection AddEnJsonTranslations(
             this IServiceCollection services,
             IConfiguration configuration)
         {
             services.AddMemoryCache();
 
-            services.AddOptions<EnjsonTranslationsOptions>()
-                .Bind(configuration.GetSection(EnjsonTranslationsOptions.SectionName));
+            services.AddOptions<EnJsonTranslationsOptions>()
+                .Bind(configuration.GetSection(EnJsonTranslationsOptions.SectionName));
 
-            services.AddHttpClient(EnjsonHttpClientName, (sp, http) =>
+            services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
             {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
+                var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
                 http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
             });
 
-            services.AddSingleton<IEnjsonUsageTracker, EnjsonUsageTracker>();
+            services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
 
-            services.AddHttpClient<IExternalTranslationProvider, EnjsonTranslationProvider>((sp, http) =>
+            services.AddHttpClient<IEnJsonTranslationProvider, EnJsonTranslationProvider>((sp, http) =>
             {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
+                var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
                 http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
             });
 
@@ -42,28 +42,28 @@ namespace NrgId.EnJson.Translations
         }
 
         /// <summary>
-        ///     Registers Enjson translations with programmatic configuration.
+        ///     Registers EnJson translations with programmatic configuration.
         /// </summary>
-        public static IServiceCollection AddEnjsonTranslations(
+        public static IServiceCollection AddEnJsonTranslations(
             this IServiceCollection services,
-            Action<EnjsonTranslationsOptions> configure)
+            Action<EnJsonTranslationsOptions> configure)
         {
             services.AddMemoryCache();
 
-            services.AddOptions<EnjsonTranslationsOptions>()
+            services.AddOptions<EnJsonTranslationsOptions>()
                 .Configure(configure);
 
-            services.AddHttpClient(EnjsonHttpClientName, (sp, http) =>
+            services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
             {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
+                var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
                 http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
             });
 
-            services.AddSingleton<IEnjsonUsageTracker, EnjsonUsageTracker>();
+            services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
 
-            services.AddHttpClient<IExternalTranslationProvider, EnjsonTranslationProvider>((sp, http) =>
+            services.AddHttpClient<IEnJsonTranslationProvider, EnJsonTranslationProvider>((sp, http) =>
             {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
+                var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
                 http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
             });
 

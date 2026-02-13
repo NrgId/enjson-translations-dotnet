@@ -1,36 +1,33 @@
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using NrgId.EnJson.Translations.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using NrgId.EnJson.Translations.Core;
 
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    ///     Enjson implementation of <see cref="IExternalTranslationProvider" />.
+    ///     EnJson implementation of <see cref="IEnJsonTranslationProvider" />.
     /// </summary>
-    public class EnjsonTranslationProvider : IExternalTranslationProvider
+    public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     {
         private readonly IMemoryCache _cache;
         private readonly HttpClient _http;
-        private readonly EnjsonTranslationsOptions _options;
-        private readonly IEnjsonUsageTracker _usageTracker;
+        private readonly EnJsonTranslationsOptions _options;
+        private readonly IEnJsonUsageTracker _usageTracker;
 
         /// <summary>
         ///     Creates a new translation provider.
         /// </summary>
-        public EnjsonTranslationProvider(
-            HttpClient http,
-            IMemoryCache cache,
-            IOptions<EnjsonTranslationsOptions> options,
-            IEnjsonUsageTracker usageTracker)
+        public EnJsonTranslationProvider(HttpClient http, IMemoryCache cache,
+            IOptions<EnJsonTranslationsOptions> options, IEnJsonUsageTracker usageTracker)
         {
             _http = http;
             _cache = cache;
@@ -42,18 +39,33 @@ namespace NrgId.EnJson.Translations
         }
 
         /// <inheritdoc />
-        public async Task<EnjsonTranslationResult> GetTranslationResultAsync(
-            string key,
-            string locale,
-            string? customGroup = null,
-            string? cacheNamespace = null,
-            CancellationToken ct = default)
+        public string? GetTranslation(string key, string locale, string? customGroup = null,
+            string? cacheNamespace = null)
+        {
+            var result = GetTranslationResultAsync(key, locale, customGroup, cacheNamespace)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+
+            return result.Found ? result.Value : result.Key;
+        }
+
+        /// <inheritdoc />
+        public async Task<string?> GetTranslationAsync(string key, string locale, string? customGroup = null,
+            string? cacheNamespace = null, CancellationToken ct = default)
+        {
+            var result = await GetTranslationResultAsync(key, locale, customGroup, cacheNamespace, ct)
+                .ConfigureAwait(false);
+            return result.Found ? result.Value : result.Key;
+        }
+
+        /// <inheritdoc cref="GetTranslationAsync"/>
+        private async Task<EnJsonTranslationResult> GetTranslationResultAsync(string key, string locale,
+            string? customGroup = null, string? cacheNamespace = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(locale))
                 throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
 
             if (string.IsNullOrWhiteSpace(key))
-                return new EnjsonTranslationResult(string.Empty, null, false);
+                return new EnJsonTranslationResult(string.Empty, null, false);
 
             if (string.IsNullOrWhiteSpace(_options.ProjectId))
                 throw new ArgumentException(ErrorMessages.EnJsonMissingProjectId, nameof(_options.ProjectId));
@@ -79,43 +91,30 @@ namespace NrgId.EnJson.Translations
             IReadOnlyDictionary<string, string> dict;
             try
             {
-                dict = await GetTranslationsAsync(locale, effectiveNamespace, customGroup, ct).ConfigureAwait(false);
+                dict = await GetTranslationsDictionaryAsync(locale, effectiveNamespace, customGroup, ct)
+                    .ConfigureAwait(false);
             }
             catch
             {
-                if (TryGetLocalFallbackValue(fullKeyForTracking, out var localValue))
-                    return new EnjsonTranslationResult(fullKeyForTracking, localValue, true);
-
-                return new EnjsonTranslationResult(fullKeyForTracking, null, false, ErrorMessages.EnJsonRequestFailed);
+                return TryGetLocalFallbackValue(fullKeyForTracking, out var localValue)
+                    ? new EnJsonTranslationResult(fullKeyForTracking, localValue, true)
+                    : new EnJsonTranslationResult(fullKeyForTracking, null, false, ErrorMessages.EnJsonRequestFailed);
             }
 
             if (dict.TryGetValue(fullKeyForTracking, out var value) && !string.IsNullOrWhiteSpace(value))
-                return new EnjsonTranslationResult(fullKeyForTracking, value, true);
+                return new EnJsonTranslationResult(fullKeyForTracking, value, true);
 
-            if (TryGetLocalFallbackValue(fullKeyForTracking, out var fallbackValue))
-                return new EnjsonTranslationResult(fullKeyForTracking, fallbackValue, true);
-
-            return new EnjsonTranslationResult(fullKeyForTracking, null, false);
+            return TryGetLocalFallbackValue(fullKeyForTracking, out var fallbackValue)
+                ? new EnJsonTranslationResult(fullKeyForTracking, fallbackValue, true)
+                : new EnJsonTranslationResult(fullKeyForTracking, null, false);
         }
 
-        /// <inheritdoc />
-        public async Task<string?> GetTranslationAsync(
-            string key,
-            string locale,
-            string? customGroup = null,
-            string? cacheNamespace = null,
-            CancellationToken ct = default)
-        {
-            var result = await GetTranslationResultAsync(key, locale, customGroup, cacheNamespace, ct)
-                .ConfigureAwait(false);
-            return result.Found ? result.Value : result.Key;
-        }
 
-        private async Task<IReadOnlyDictionary<string, string>> GetTranslationsAsync(
-            string locale,
-            string? @namespace,
-            string? customGroup,
-            CancellationToken ct)
+        /// <summary>
+        ///     Gets translations dictionary
+        /// </summary>
+        private async Task<IReadOnlyDictionary<string, string>> GetTranslationsDictionaryAsync(string locale,
+            string? @namespace, string? customGroup, CancellationToken ct)
         {
             var namespaceKey = string.IsNullOrWhiteSpace(@namespace) ? "root" : @namespace;
             var customGroupKey = string.IsNullOrWhiteSpace(customGroup) ? "global" : customGroup;
@@ -123,23 +122,26 @@ namespace NrgId.EnJson.Translations
             if (_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) && cached != null)
                 return cached;
 
-            var urlBuilder = new StringBuilder();
-            urlBuilder.Append(_options.BaseUrl.TrimEnd('/'))
-                .Append("/integration/")
-                .Append(_options.ProjectId)
-                .Append("/translations?language=")
-                .Append(Uri.EscapeDataString(locale))
-                .Append("&fallbackLanguage=en");
+            var builder = new UriBuilder(_options.BaseUrl.TrimEnd('/'));
+
+            builder.Path = $"{builder.Path.TrimEnd('/')}/integration/{_options.ProjectId}/translations";
+
+            var query = HttpUtility.ParseQueryString(string.Empty);
+
+            query["language"] = locale;
+            query["fallbackLanguage"] = _options.FallBackLanguage;
 
             if (!string.IsNullOrWhiteSpace(@namespace))
-                urlBuilder.Append("&namespace=").Append(Uri.EscapeDataString(@namespace));
+                query["namespace"] = @namespace;
 
             if (!string.IsNullOrWhiteSpace(customGroup))
-                urlBuilder.Append("&customGroup=").Append(Uri.EscapeDataString(customGroup));
+                query["customGroup"] = customGroup;
 
-            var url = urlBuilder.ToString();
+            builder.Query = query.ToString();
 
-            var dict = await _http.GetFromJsonAsync<Dictionary<string, string>>(url, ct)
+            var uri = builder.Uri;
+
+            var dict = await _http.GetFromJsonAsync<Dictionary<string, string>>(uri, ct)
                        ?? new Dictionary<string, string>();
 
             IReadOnlyDictionary<string, string> ro = dict;

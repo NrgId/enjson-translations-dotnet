@@ -6,12 +6,12 @@ namespace NrgId.EnJson.Translations
     /// <summary>
     ///     Provides translations from enjson.com.
     /// </summary>
-    public interface IExternalTranslationProvider
+    public interface IEnJsonTranslationProvider
     {
         /// <summary>
-        ///     Gets a translation and result metadata.
+        ///     Gets a translation for the specified locale and key asynchronously. 
         /// </summary>
-        Task<EnjsonTranslationResult> GetTranslationResultAsync(
+        Task<string?> GetTranslationAsync(
             string key,
             string locale,
             string? customGroup = null,
@@ -20,14 +20,13 @@ namespace NrgId.EnJson.Translations
         );
 
         /// <summary>
-        ///     Gets a translation for the specified locale and key.
+        ///     Gets a translation for the specified locale and key synchronously.
         /// </summary>
-        Task<string?> GetTranslationAsync(
+        string? GetTranslation(
             string key,
             string locale,
             string? customGroup = null,
-            string? cacheNamespace = null,
-            CancellationToken ct = default
+            string? cacheNamespace = null
         );
     }
 }

@@ -11,11 +11,11 @@
     <Version>1.0.0</Version>
     <Authors>NrgId</Authors>
     <Company>NrgId</Company>
-    <Description>Translation provider and DI extensions for loading translations from enjson.com (NrgId platform).</Description>
-    <PackageProjectUrl>https://github.com/NrgId/enjson-translations-dotnet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/NrgId/enjson-translations-dotnet</RepositoryUrl>
+    <Description>Translation provider and DI extensions for loading translations from EnJson.com (NrgId platform).</Description>
+    <PackageProjectUrl>https://github.com/NrgId/EnJson-translations-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/NrgId/EnJson-translations-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>nrgid;enjson;translations;localization;tms;i18n</PackageTags>
+    <PackageTags>nrgid;EnJson;translations;localization;tms;i18n</PackageTags>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>

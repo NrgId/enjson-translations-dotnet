@@ -1,6 +1,6 @@
 # NrgId.EnJson.Translations
 
-A .NET translation provider and DI extensions for loading translations from enjson.com as part of the NrgId platform.
+A .NET translation provider and DI extensions for loading translations from EnJson.com as part of the NrgId platform.
 
 ## Installation
 
@@ -10,12 +10,12 @@ dotnet add package NrgId.EnJson.Translations
 
 ## Configuration
 
-Add configuration for the `EnjsonTranslations` section:
+Add configuration for the `EnJsonTranslations` section:
 
 ```json
 {
-  "EnjsonTranslations": {
-    "BaseUrl": "https://api.enjson.com",
+  "EnJsonTranslations": {
+    "BaseUrl": "https://api.EnJson.com",
     "ProjectId": "YOUR_PROJECT_ID",
     "CacheMinutes": 5,
     "HttpTimeoutSeconds": 20,
@@ -34,7 +34,7 @@ Add configuration for the `EnjsonTranslations` section:
 ```csharp
 using NrgId.EnJson.Translations;
 
-builder.Services.AddEnjsonTranslations(builder.Configuration);
+builder.Services.AddEnJsonTranslations(builder.Configuration);
 ```
 
 ## Usage

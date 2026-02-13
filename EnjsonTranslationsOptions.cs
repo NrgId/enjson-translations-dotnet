@@ -1,22 +1,22 @@
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
-    ///     Configuration options for Enjson translations.
+    ///     Configuration options for EnJson translations.
     /// </summary>
-    public class EnjsonTranslationsOptions
+    public class EnJsonTranslationsOptions
     {
         /// <summary>
-        ///     Configuration section name for Enjson translations.
+        ///     Configuration section name for EnJson translations.
         /// </summary>
-        public const string SectionName = "EnjsonTranslations";
+        public const string SectionName = "EnJsonTranslations";
 
         /// <summary>
-        ///     Base API URL for the Enjson service.
+        ///     Base API URL for the EnJson service.
         /// </summary>
-        public string BaseUrl { get; set; } = "https://api.enjson.com";
+        public string BaseUrl { get; set; } = "https://api.EnJson.com";
 
         /// <summary>
-        ///     Enjson Project ID.
+        ///     EnJson Project ID.
         /// </summary>
         public string ProjectId { get; set; } = "";
 
@@ -33,7 +33,7 @@ namespace NrgId.EnJson.Translations
         /// <summary>
         ///     Default locale used when none is provided.
         /// </summary>
-        public string DefaultLocale { get; set; } = "en";
+        public string FallBackLanguage { get; set; } = "en";
 
         /// <summary>
         ///     Namespace depth used when parsing keys like "emails.user.created".
