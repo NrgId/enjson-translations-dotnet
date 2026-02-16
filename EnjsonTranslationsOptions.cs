@@ -21,6 +21,11 @@ namespace NrgId.EnJson.Translations
         public string ProjectId { get; set; } = "";
 
         /// <summary>
+        ///     API key for EnJson secured APIs.
+        /// </summary>
+        public string ApiKey { get; set; } = "";
+
+        /// <summary>
         ///     Cache duration in minutes.
         /// </summary>
         public int CacheMinutes { get; set; } = 5;

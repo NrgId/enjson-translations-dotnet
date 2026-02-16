@@ -19,24 +19,10 @@ namespace NrgId.EnJson.Translations
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            services.AddMemoryCache();
-
             services.AddOptions<EnJsonTranslationsOptions>()
                 .Bind(configuration.GetSection(EnJsonTranslationsOptions.SectionName));
 
-            services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
-            {
-                var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
-                http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-            });
-
-            services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
-
-            services.AddHttpClient<IEnJsonTranslationProvider, EnJsonTranslationProvider>((sp, http) =>
-            {
-                var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
-                http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-            });
+            AddServices(services);
 
             return services;
         }
@@ -48,10 +34,17 @@ namespace NrgId.EnJson.Translations
             this IServiceCollection services,
             Action<EnJsonTranslationsOptions> configure)
         {
-            services.AddMemoryCache();
-
             services.AddOptions<EnJsonTranslationsOptions>()
                 .Configure(configure);
+
+            AddServices(services);
+
+            return services;
+        }
+
+        private static void AddServices(IServiceCollection services)
+        {
+            services.AddMemoryCache();
 
             services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
             {
@@ -66,8 +59,6 @@ namespace NrgId.EnJson.Translations
                 var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
                 http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
             });
-
-            return services;
         }
     }
 }

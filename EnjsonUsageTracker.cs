@@ -25,7 +25,7 @@ namespace NrgId.EnJson.Translations
     /// </summary>
     public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _http;
         private readonly EnJsonTranslationsOptions _options;
 
         private readonly ConcurrentDictionary<string, byte> _pending =
@@ -41,8 +41,12 @@ namespace NrgId.EnJson.Translations
             IHttpClientFactory httpClientFactory,
             IOptions<EnJsonTranslationsOptions> options)
         {
-            _httpClientFactory = httpClientFactory;
             _options = options.Value;
+
+            _http = httpClientFactory.CreateClient(ServiceCollectionExtensions.EnJsonHttpClientName);
+
+            if (!string.IsNullOrEmpty(_options.ApiKey))
+                _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
 
             if (_options.EnableUsageTracking && _options.UsageReportIntervalMinutes > 0)
                 _timer = new Timer(_ => _ = FlushAsync(), null,
@@ -94,8 +98,7 @@ namespace NrgId.EnJson.Translations
                     translationKeys = batch
                 };
 
-                var client = _httpClientFactory.CreateClient(ServiceCollectionExtensions.EnJsonHttpClientName);
-                var response = await client.PostAsJsonAsync(url, payload).ConfigureAwait(false);
+                var response = await _http.PostAsJsonAsync(url, payload).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
                     return;

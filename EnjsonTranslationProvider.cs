@@ -36,6 +36,9 @@ namespace NrgId.EnJson.Translations
 
             if (!string.IsNullOrWhiteSpace(_options.LocalFallbackPath) && !File.Exists(_options.LocalFallbackPath))
                 throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPath));
+
+            if(!string.IsNullOrEmpty(_options.ApiKey))
+                _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
         }
 
         /// <inheritdoc />
