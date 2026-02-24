@@ -34,10 +34,11 @@ namespace NrgId.EnJson.Translations
             _options = options.Value;
             _usageTracker = usageTracker;
 
-            if (!string.IsNullOrWhiteSpace(_options.LocalFallbackPath) && !File.Exists(_options.LocalFallbackPath))
-                throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPath));
+            foreach (var fallbackPath in _options.LocalFallbackPath)
+                if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
+                    throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPath));
 
-            if(!string.IsNullOrEmpty(_options.ApiKey))
+            if (!string.IsNullOrEmpty(_options.ApiKey))
                 _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
         }
 
@@ -60,7 +61,7 @@ namespace NrgId.EnJson.Translations
             return result.Found ? result.Value : result.Key;
         }
 
-        /// <inheritdoc cref="GetTranslationAsync"/>
+        /// <inheritdoc cref="GetTranslationAsync" />
         private async Task<EnJsonTranslationResult> GetTranslationResultAsync(string key, string locale,
             string? customGroup = null, string? cacheNamespace = null, CancellationToken ct = default)
         {
@@ -99,7 +100,7 @@ namespace NrgId.EnJson.Translations
             }
             catch
             {
-                return TryGetLocalFallbackValue(fullKeyForTracking, out var localValue)
+                return TryGetLocalFallbackValue(fullKeyForTracking, locale, out var localValue)
                     ? new EnJsonTranslationResult(fullKeyForTracking, localValue, true)
                     : new EnJsonTranslationResult(fullKeyForTracking, null, false, ErrorMessages.EnJsonRequestFailed);
             }
@@ -107,7 +108,7 @@ namespace NrgId.EnJson.Translations
             if (dict.TryGetValue(fullKeyForTracking, out var value) && !string.IsNullOrWhiteSpace(value))
                 return new EnJsonTranslationResult(fullKeyForTracking, value, true);
 
-            return TryGetLocalFallbackValue(fullKeyForTracking, out var fallbackValue)
+            return TryGetLocalFallbackValue(fullKeyForTracking, locale, out var fallbackValue)
                 ? new EnJsonTranslationResult(fullKeyForTracking, fallbackValue, true)
                 : new EnJsonTranslationResult(fullKeyForTracking, null, false);
         }
@@ -182,18 +183,20 @@ namespace NrgId.EnJson.Translations
             return true;
         }
 
-        private bool TryGetLocalFallbackValue(string key, out string? value)
+        private bool TryGetLocalFallbackValue(string key, string language, out string? value)
         {
             value = null;
 
-            if (string.IsNullOrWhiteSpace(_options.LocalFallbackPath))
+            _options.LocalFallbackPath.TryGetValue(language, out var localFallBackPath);
+
+            if (string.IsNullOrWhiteSpace(localFallBackPath))
                 return false;
 
-            var cacheKey = $"enjson:fallback:{_options.LocalFallbackPath}";
+            var cacheKey = $"enjson:fallback:{localFallBackPath}";
             if (!_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) || cached == null)
                 try
                 {
-                    var json = File.ReadAllText(_options.LocalFallbackPath);
+                    var json = File.ReadAllText(localFallBackPath);
                     var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
                                ?? new Dictionary<string, string>();
                     cached = dict;

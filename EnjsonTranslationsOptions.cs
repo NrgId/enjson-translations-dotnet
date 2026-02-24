@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace NrgId.EnJson.Translations
 {
     /// <summary>
@@ -48,7 +50,7 @@ namespace NrgId.EnJson.Translations
         /// <summary>
         ///     Optional local fallback file path (e.g. Resources/en.json).
         /// </summary>
-        public string? LocalFallbackPath { get; set; }
+        public Dictionary<string, string> LocalFallbackPath { get; set; } = [];
 
         /// <summary>
         ///     Enables usage tracking to update last-used timestamps.

@@ -9,7 +9,7 @@ namespace NrgId.EnJson.Translations
     public interface IEnJsonTranslationProvider
     {
         /// <summary>
-        ///     Gets a translation for the specified locale and key asynchronously. 
+        ///     Gets a translation for the specified locale and key asynchronously.
         /// </summary>
         Task<string?> GetTranslationAsync(
             string key,
