@@ -15,16 +15,16 @@ Add configuration for the `EnJsonTranslations` section:
 ```json
 {
   "EnJsonTranslations": {
-    "BaseUrl": "https://api.EnJson.com",
+    "BaseUrl": "https://api.enjson.com",
     "ProjectId": "YOUR_PROJECT_ID",
     "ApiKey": "YOUR_API_KEY",
     "CacheMinutes": 5,
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
     "NamespaceDepth": 1,
-    "LocalFallbackPaths": {
-      "en": "Resources/en.json",
-      "fr": "Resources/fr.json"
+    "LocalFallbackPath": {
+        "en": "Resources/en.json",
+        "fr": "Resources/fr.json",
     },
     "EnableUsageTracking": true,
     "UsageReportIntervalMinutes": 5,

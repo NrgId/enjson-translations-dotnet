@@ -8,7 +8,7 @@ namespace NrgId.EnJson.Translations.BackgroundServices;
 /// <summary>
 ///     Service for processing errors with queue
 /// </summary>
-internal class ErrorProcessorService : IDisposable
+public class ErrorProcessorService : IDisposable
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(500);
     private readonly EnJsonErrorAggregator _aggregator;
@@ -19,7 +19,7 @@ internal class ErrorProcessorService : IDisposable
     ///     Creates service for processing errors with queue
     /// </summary>
     /// <param name="aggregator"></param>
-    internal ErrorProcessorService(IEnJsonErrorAggregator aggregator)
+    public ErrorProcessorService(IEnJsonErrorAggregator aggregator)
     {
         _aggregator = (EnJsonErrorAggregator)aggregator;
         _timer = new Timer(DrainQueue, null, TimeSpan.Zero, Interval);
