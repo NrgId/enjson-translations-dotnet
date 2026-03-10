@@ -44,13 +44,13 @@ builder.Services.AddEnJsonTranslations(builder.Configuration);
 ## Usage
 
 ```csharp
-using NrgId.EnJson.Translations;
+using NrgId.EnJson.Translations.Interfaces;
 
 public class MyService
 {
-    private readonly IExternalTranslationProvider _provider;
+    private readonly IEnJsonTranslationProvider _provider;
 
-    public MyService(IExternalTranslationProvider provider)
+    public MyService(IEnJsonTranslationProvider provider)
     {
         _provider = provider;
     }
@@ -66,7 +66,7 @@ public class MyService
 ## Error handling
 
 ```csharp
-using NrgId.EnJson.Translations;
+using NrgId.EnJson.Translations.Interfaces;
 
 public class ErrorHandler
 {
