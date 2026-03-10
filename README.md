@@ -17,6 +17,7 @@ Add configuration for the `EnJsonTranslations` section:
   "EnJsonTranslations": {
     "BaseUrl": "https://api.EnJson.com",
     "ProjectId": "YOUR_PROJECT_ID",
+    "ApiKey": "YOUR_API_KEY",
     "CacheMinutes": 5,
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
