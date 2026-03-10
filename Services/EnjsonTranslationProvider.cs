@@ -1,3 +1,12 @@
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using NrgId.EnJson.Translations.Config;
+using NrgId.EnJson.Translations.Core;
+using NrgId.EnJson.Translations.Diagnostics;
+using NrgId.EnJson.Translations.Events;
+using NrgId.EnJson.Translations.Interfaces;
+using NrgId.EnJson.Translations.Services.Results;
+using SmartFormat;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,14 +16,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using NrgId.EnJson.Translations.Config;
-using NrgId.EnJson.Translations.Core;
-using NrgId.EnJson.Translations.Diagnostics;
-using NrgId.EnJson.Translations.Events;
-using NrgId.EnJson.Translations.Interfaces;
-using NrgId.EnJson.Translations.Services.Results;
 
 namespace NrgId.EnJson.Translations.Services;
 
@@ -56,21 +57,36 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
     /// <inheritdoc />
     public string? GetTranslation(string key, string locale, string? customGroup = null,
-        string? cacheNamespace = null)
+        string? cacheNamespace = null, Dictionary<string, string>? format = null)
     {
         var result = GetTranslationResultAsync(key, locale, customGroup, cacheNamespace)
             .ConfigureAwait(false).GetAwaiter().GetResult();
 
-        return result.Found ? result.Value : result.Key;
+        var textResult = result.Found ? result.Value! : result.Key;
+
+        if (format == null)
+            return textResult;
+
+        var formattedResult = Smart.Format(textResult, format);
+
+        return formattedResult;
     }
 
     /// <inheritdoc />
     public async Task<string?> GetTranslationAsync(string key, string locale, string? customGroup = null,
-        string? cacheNamespace = null, CancellationToken ct = default)
+        string? cacheNamespace = null, Dictionary<string, string>? format = null,  CancellationToken ct = default)
     {
         var result = await GetTranslationResultAsync(key, locale, customGroup, cacheNamespace, ct)
             .ConfigureAwait(false);
-        return result.Found ? result.Value : result.Key;
+
+        var textResult = result.Found ? result.Value! : result.Key;
+
+        if (format == null)
+            return textResult;
+
+        var formattedResult = Smart.Format(textResult, format);
+
+        return formattedResult;
     }
 
     /// <summary>

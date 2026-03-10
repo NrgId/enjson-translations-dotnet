@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ public interface IEnJsonTranslationProvider
         string locale,
         string? customGroup = null,
         string? cacheNamespace = null,
+        Dictionary<string, string>? format = null,
         CancellationToken ct = default
     );
 
@@ -26,6 +28,7 @@ public interface IEnJsonTranslationProvider
         string key,
         string locale,
         string? customGroup = null,
-        string? cacheNamespace = null
+        string? cacheNamespace = null,
+        Dictionary<string, string>? format = null
     );
 }
