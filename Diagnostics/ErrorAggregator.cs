@@ -9,7 +9,7 @@ namespace NrgId.EnJson.Translations.Diagnostics;
 /// <summary>
 ///     Error aggregator
 /// </summary>
-public class EnJsonErrorAggregator : IEnJsonErrorAggregator, IDisposable
+internal class EnJsonErrorAggregator : IEnJsonErrorAggregator, IDisposable
 {
     private readonly Channel<EnjsonErrorEventArgs> _channel =
         Channel.CreateUnbounded<EnjsonErrorEventArgs>();

@@ -31,4 +31,14 @@ public class EnjsonErrorEventArgs(Exception exception, string source, string? co
     ///     Handled flag
     /// </summary>
     public bool Handled { get; set; }
+
+
+    /// <summary>
+    ///     <inheritdoc />
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return $"Source: {Source}, Context: {Context}, OccuredAt: {OccurredAt}, Handled: {Handled}";
+    }
 }

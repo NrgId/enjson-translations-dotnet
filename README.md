@@ -21,7 +21,11 @@ Add configuration for the `EnJsonTranslations` section:
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
     "NamespaceDepth": 1,
-    "LocalFallbackPath": "Resources/en.json",
+    "LocalFallbackPath": 
+    [
+        "en": "Resources/en.json",
+        "fr": "Resources/fr.json",
+    ],
     "EnableUsageTracking": true,
     "UsageReportIntervalMinutes": 5,
     "UsageReportBatchSize": 200
@@ -55,6 +59,29 @@ public class MyService
     {
         var value = await _provider.GetTranslationAsync("emails.user_registered.subject", "en");
         return string.IsNullOrWhiteSpace(value) ? "Title" : value;
+    }
+}
+```
+
+## Error handling
+
+```csharp
+using NrgId.EnJson.Translations;
+
+public class ErrorHandler
+{
+    private readonly IEnJsonErrorAggregator _errorAggregator;
+
+    public MyService(IEnJsonErrorAggregator errorAggregator)
+    {
+        _errorAggregator = errorAggregator;
+        _errorAggregator.OnAnyError += OnError;
+    }
+
+    public void OnError(EnjsonErrorEventArgs args)
+    {
+        // Handle the error here (log, alert, etc.)
+        Console.WriteLine(args.ToString());
     }
 }
 ```
