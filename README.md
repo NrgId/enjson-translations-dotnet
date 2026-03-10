@@ -1,6 +1,6 @@
 # NrgId.EnJson.Translations
 
-A .NET translation provider and DI extensions for loading translations from enjson.com as part of the NrgId platform.
+A .NET translation provider and DI extensions for loading translations from EnJson.com as part of the NrgId platform.
 
 ## Installation
 
@@ -10,18 +10,23 @@ dotnet add package NrgId.EnJson.Translations
 
 ## Configuration
 
-Add configuration for the `EnjsonTranslations` section:
+Add configuration for the `EnJsonTranslations` section:
 
 ```json
 {
-  "EnjsonTranslations": {
-    "BaseUrl": "https://api.enjson.com",
+  "EnJsonTranslations": {
+    "BaseUrl": "https://api.EnJson.com",
     "ProjectId": "YOUR_PROJECT_ID",
+    "ApiKey": "YOUR_API_KEY",
     "CacheMinutes": 5,
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
     "NamespaceDepth": 1,
-    "LocalFallbackPath": "Resources/en.json",
+    "LocalFallbackPath": 
+    [
+        "en": "Resources/en.json",
+        "fr": "Resources/fr.json",
+    ],
     "EnableUsageTracking": true,
     "UsageReportIntervalMinutes": 5,
     "UsageReportBatchSize": 200
@@ -34,19 +39,19 @@ Add configuration for the `EnjsonTranslations` section:
 ```csharp
 using NrgId.EnJson.Translations;
 
-builder.Services.AddEnjsonTranslations(builder.Configuration);
+builder.Services.AddEnJsonTranslations(builder.Configuration);
 ```
 
 ## Usage
 
 ```csharp
-using NrgId.EnJson.Translations;
+using NrgId.EnJson.Translations.Interfaces;
 
 public class MyService
 {
-    private readonly IExternalTranslationProvider _provider;
+    private readonly IEnJsonTranslationProvider _provider;
 
-    public MyService(IExternalTranslationProvider provider)
+    public MyService(IEnJsonTranslationProvider provider)
     {
         _provider = provider;
     }
@@ -55,6 +60,29 @@ public class MyService
     {
         var value = await _provider.GetTranslationAsync("emails.user_registered.subject", "en");
         return string.IsNullOrWhiteSpace(value) ? "Title" : value;
+    }
+}
+```
+
+## Error handling
+
+```csharp
+using NrgId.EnJson.Translations.Interfaces;
+
+public class ErrorHandler
+{
+    private readonly IEnJsonErrorAggregator _errorAggregator;
+
+    public MyService(IEnJsonErrorAggregator errorAggregator)
+    {
+        _errorAggregator = errorAggregator;
+        _errorAggregator.OnAnyError += OnError;
+    }
+
+    public void OnError(EnjsonErrorEventArgs args)
+    {
+        // Handle the error here (log, alert, etc.)
+        Console.WriteLine(args.ToString());
     }
 }
 ```

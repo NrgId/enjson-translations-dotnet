@@ -1,21 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>13.0</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>NrgId.EnJson.Translations</RootNamespace>
     <AssemblyName>NrgId.EnJson.Translations</AssemblyName>
 
     <PackageId>NrgId.EnJson.Translations</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>NrgId</Authors>
     <Company>NrgId</Company>
-    <Description>Translation provider and DI extensions for loading translations from enjson.com (NrgId platform).</Description>
-    <PackageProjectUrl>https://github.com/NrgId/enjson-translations-dotnet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/NrgId/enjson-translations-dotnet</RepositoryUrl>
+    <Description>Translation provider and DI extensions for loading translations from EnJson.com (NrgId platform).</Description>
+    <PackageProjectUrl>https://github.com/NrgId/EnJson-translations-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/NrgId/EnJson-translations-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>nrgid;enjson;translations;localization;tms;i18n</PackageTags>
+    <PackageTags>nrgid;EnJson;translations;localization;tms;i18n</PackageTags>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>
@@ -35,5 +35,6 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+    <PackageReference Include="System.Threading.Channels" Version="10.0.3" />
   </ItemGroup>
 </Project>

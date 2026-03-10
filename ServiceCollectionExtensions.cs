@@ -2,72 +2,75 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NrgId.EnJson.Translations.BackgroundServices;
+using NrgId.EnJson.Translations.Config;
+using NrgId.EnJson.Translations.Diagnostics;
+using NrgId.EnJson.Translations.Interfaces;
+using NrgId.EnJson.Translations.Services;
 
-namespace NrgId.EnJson.Translations
+namespace NrgId.EnJson.Translations;
+
+/// <summary>
+///     DI registration extensions for EnJson translations.
+/// </summary>
+public static class ServiceCollectionExtensions
 {
+    internal const string EnJsonHttpClientName = "EnJsonTranslations";
+
     /// <summary>
-    /// DI registration extensions for Enjson translations.
+    ///     Registers EnJson translations with memory cache and HTTP client support.
     /// </summary>
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection AddEnJsonTranslations(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        internal const string EnjsonHttpClientName = "EnjsonTranslations";
+        services.AddOptions<EnJsonTranslationsOptions>()
+            .Bind(configuration.GetSection(EnJsonTranslationsOptions.SectionName));
 
-        /// <summary>
-        /// Registers Enjson translations with memory cache and HTTP client support.
-        /// </summary>
-        public static IServiceCollection AddEnjsonTranslations(
-            this IServiceCollection services,
-            IConfiguration configuration)
+        AddServices(services);
+
+        return services;
+    }
+
+    /// <summary>
+    ///     Registers EnJson translations with programmatic configuration.
+    /// </summary>
+    public static IServiceCollection AddEnJsonTranslations(
+        this IServiceCollection services,
+        Action<EnJsonTranslationsOptions> configure)
+    {
+        services.AddOptions<EnJsonTranslationsOptions>()
+            .Configure(configure);
+
+        AddServices(services);
+
+        return services;
+    }
+
+    private static void AddServices(IServiceCollection services)
+    {
+        services.AddMemoryCache();
+
+        services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
         {
-            services.AddMemoryCache();
+            var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
+            http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
+        });
 
-            services.AddOptions<EnjsonTranslationsOptions>()
-                .Bind(configuration.GetSection(EnjsonTranslationsOptions.SectionName));
+        services.AddSingleton<ErrorProcessorService>();
 
-            services.AddHttpClient(EnjsonHttpClientName, (sp, http) =>
-            {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
-                http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-            });
-
-            services.AddSingleton<IEnjsonUsageTracker, EnjsonUsageTracker>();
-
-            services.AddHttpClient<IExternalTranslationProvider, EnjsonTranslationProvider>((sp, http) =>
-            {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
-                http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-            });
-
-            return services;
-        }
-
-        /// <summary>
-        /// Registers Enjson translations with programmatic configuration.
-        /// </summary>
-        public static IServiceCollection AddEnjsonTranslations(
-            this IServiceCollection services,
-            Action<EnjsonTranslationsOptions> configure)
+        services.AddSingleton<IEnJsonErrorAggregator>(sp =>
         {
-            services.AddMemoryCache();
+            sp.GetRequiredService<ErrorProcessorService>(); // force resolve service
+            return sp.GetRequiredService<EnJsonErrorAggregator>();
+        });
 
-            services.AddOptions<EnjsonTranslationsOptions>()
-                .Configure(configure);
+        services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
 
-            services.AddHttpClient(EnjsonHttpClientName, (sp, http) =>
-            {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
-                http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-            });
-
-            services.AddSingleton<IEnjsonUsageTracker, EnjsonUsageTracker>();
-
-            services.AddHttpClient<IExternalTranslationProvider, EnjsonTranslationProvider>((sp, http) =>
-            {
-                var opt = sp.GetRequiredService<IOptions<EnjsonTranslationsOptions>>().Value;
-                http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-            });
-
-            return services;
-        }
+        services.AddHttpClient<IEnJsonTranslationProvider, EnJsonTranslationProvider>((sp, http) =>
+        {
+            var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
+            http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
+        });
     }
 }
