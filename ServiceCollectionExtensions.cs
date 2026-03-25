@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
     internal const string EnJsonHttpClientName = "EnJsonTranslations";
 
     /// <summary>
-    ///     Registers EnJson translations with memory cache and HTTP client support.
+    /// Registers EnJson translations using configuration set.
     /// </summary>
     public static IServiceCollection AddEnJsonTranslations(
         this IServiceCollection services,
@@ -33,7 +33,21 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Registers EnJson translations with programmatic configuration.
+    /// Registers EnJson translations using already instantiated options object.
+    /// </summary>
+    public static IServiceCollection AddEnJsonTranslations(
+        this IServiceCollection services,
+        EnJsonTranslationsOptions options)
+    {
+        services.AddSingleton(Options.Create(options));
+
+        AddServices(services);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers EnJson translations with programmatic configuration.
     /// </summary>
     public static IServiceCollection AddEnJsonTranslations(
         this IServiceCollection services,
