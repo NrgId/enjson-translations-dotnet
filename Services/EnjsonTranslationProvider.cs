@@ -25,7 +25,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     private readonly HttpClient _http;
     private readonly EnJsonTranslationsOptions _options;
     private readonly IEnJsonUsageTracker _usageTracker;
-    private readonly IEnJsonErrorListener? _errorListener;
+    private readonly IEnJsonErrorListener _errorListener;
 
     /// <summary>
     ///     Creates a new translation provider.
@@ -35,7 +35,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         IMemoryCache cache,
         IOptions<EnJsonTranslationsOptions> options, 
         IEnJsonUsageTracker usageTracker,
-        IEnJsonErrorListener? errorListener = null
+        IEnJsonErrorListener errorListener
     )
     {
         _http = http;
@@ -170,7 +170,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         }
         catch (Exception e)
         {
-            _errorListener?.OnError(ErrorSources.TranslationProvider, null, e, null);
+            _errorListener.OnError(ErrorSources.TranslationProvider, null, e, null);
             return new Dictionary<string, string>();
         }
     }
@@ -224,7 +224,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
             }
             catch (Exception ex)
             {
-                _errorListener?.OnError(ErrorSources.TranslationFallBackProvider, null, ex, null);
+                _errorListener.OnError(ErrorSources.TranslationFallBackProvider, null, ex, null);
                 return false;
             }
 

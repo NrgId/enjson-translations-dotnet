@@ -63,6 +63,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddMemoryCache();
 
+        services.AddSingleton<IEnJsonErrorListener, DefaultEnJsonErrorListener>();
+
         services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
         {
             var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;

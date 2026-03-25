@@ -39,6 +39,8 @@ Add configuration for the `EnJsonTranslations` section:
 using NrgId.EnJson.Translations;
 
 builder.Services.AddEnJsonTranslations(builder.Configuration);
+
+builder.Services.AddSingleton<IEnJsonErrorListener, MyErrorListener>(); // optional
 ```
 
 ## Usage
@@ -65,23 +67,23 @@ public class MyService
 
 ## Error handling
 
+Override `IEnJsonErrorListener` service to handle errors.
+
+Default implementation just logs errors:
+
 ```csharp
-using NrgId.EnJson.Translations.Interfaces;
-
-public class ErrorHandler
+public class DefaultEnJsonErrorListener(Logger<IEnJsonErrorListener> logger) : IEnJsonErrorListener
 {
-    private readonly IEnJsonErrorAggregator _errorAggregator;
-
-    public MyService(IEnJsonErrorAggregator errorAggregator)
-    {
-        _errorAggregator = errorAggregator;
-        _errorAggregator.OnAnyError += OnError;
-    }
-
-    public void OnError(EnjsonErrorEventArgs args)
-    {
-        // Handle the error here (log, alert, etc.)
-        Console.WriteLine(args.ToString());
-    }
+	public void OnError(string source, string? context, Exception? exception, HttpResponseMessage? httpResponseMessage)
+	{
+		if (httpResponseMessage != null)
+		{
+			logger.LogError(exception, "Source={Source}, context={Context}, Request failed with status={Status}.", source, context, httpResponseMessage.StatusCode);
+		}
+		else
+		{
+			logger.LogError(exception, "Source={Source}, context={Context}", source, context);
+		}
+	}
 }
 ```

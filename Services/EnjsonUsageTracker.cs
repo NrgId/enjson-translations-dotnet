@@ -19,7 +19,7 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 {
     private readonly HttpClient _http;
     private readonly EnJsonTranslationsOptions _options;
-    private readonly IEnJsonErrorListener? _errorListener;
+    private readonly IEnJsonErrorListener _errorListener;
 
     private readonly ConcurrentDictionary<string, byte> _pending = new(StringComparer.OrdinalIgnoreCase);
 
@@ -32,7 +32,7 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     public EnJsonUsageTracker(
         IHttpClientFactory httpClientFactory,
         IOptions<EnJsonTranslationsOptions> options,
-        IEnJsonErrorListener? errorListener = null
+        IEnJsonErrorListener errorListener
     )
     {
         _options = options.Value;
@@ -96,7 +96,7 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 
             if (!response.IsSuccessStatusCode)
             {
-                _errorListener?.OnError(ErrorSources.UsageTracker, ErrorMessages.EnJsonRequestFailed, null, response);
+                _errorListener.OnError(ErrorSources.UsageTracker, ErrorMessages.EnJsonRequestFailed, null, response);
                 return;
             }
 
@@ -105,7 +105,7 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
         }
         catch (Exception ex)
         {
-            _errorListener?.OnError(ErrorSources.UsageTracker, null, ex, null);
+            _errorListener.OnError(ErrorSources.UsageTracker, null, ex, null);
         }
         finally
         {
