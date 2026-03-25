@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,5 +28,16 @@ public interface IEnJsonTranslationProvider
         string locale,
         string? customGroup = null,
         string? cacheNamespace = null
+    );
+
+    /// <summary>
+    /// Gets all translations for the namespace, merged with local fallbacks if available,
+    /// but doesn't report usage. For now, only top-level namespace is supported.
+    /// </summary>
+    Task<JsonObject?> GetNamespaceAsync(
+        string locale, 
+        string @namespace, 
+        string? customGroup,
+        CancellationToken cancellationToken
     );
 }

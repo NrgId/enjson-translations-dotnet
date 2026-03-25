@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -26,6 +27,8 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     private readonly EnJsonTranslationsOptions _options;
     private readonly IEnJsonUsageTracker _usageTracker;
     private readonly IEnJsonErrorListener _errorListener;
+
+    private const string CachePrefix = "enjson";
 
     /// <summary>
     ///     Creates a new translation provider.
@@ -132,28 +135,11 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     {
         var namespaceKey = string.IsNullOrWhiteSpace(@namespace) ? "root" : @namespace;
         var customGroupKey = string.IsNullOrWhiteSpace(customGroup) ? "global" : customGroup;
-        var cacheKey = $"enjson:{_options.ProjectId}:{locale}:{namespaceKey}:{customGroupKey}";
+        var cacheKey = $"{CachePrefix}:{_options.ProjectId}:{locale}:{namespaceKey}:{customGroupKey}";
         if (_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) && cached != null)
             return cached;
 
-        var builder = new UriBuilder(_options.BaseUrl.TrimEnd('/'));
-
-        builder.Path = $"{builder.Path.TrimEnd('/')}/integration/{_options.ProjectId}/translations";
-
-        var query = HttpUtility.ParseQueryString(string.Empty);
-
-        query["language"] = locale;
-        query["fallbackLanguage"] = _options.FallBackLanguage;
-
-        if (!string.IsNullOrWhiteSpace(@namespace))
-            query["namespace"] = @namespace;
-
-        if (!string.IsNullOrWhiteSpace(customGroup))
-            query["customGroup"] = customGroup;
-
-        builder.Query = query.ToString();
-
-        var uri = builder.Uri;
+        var uri = BuildRequestUri(locale, @namespace, customGroup);
         try
         {
             var dict = await _http.GetFromJsonAsync<Dictionary<string, string>>(uri, ct)
@@ -161,7 +147,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
             IReadOnlyDictionary<string, string> ro = dict;
 
-            _cache.Set(cacheKey, ro, new MemoryCacheEntryOptions
+            _cache.Set(cacheKey, dict, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes)
             });
@@ -200,16 +186,16 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         return true;
     }
 
-    private bool TryGetLocalFallbackValue(string key, string language, out string? value)
+    private bool TryGetLocalFallbackValue(string key, string locale, out string? value)
     {
         value = null;
 
-        _options.LocalFallbackPaths.TryGetValue(language, out var localFallBackPath);
+        _options.LocalFallbackPaths.TryGetValue(locale, out var localFallBackPath);
 
         if (string.IsNullOrWhiteSpace(localFallBackPath))
             return false;
 
-        var cacheKey = $"enjson:fallback:{localFallBackPath}";
+        var cacheKey = $"{CachePrefix}:fallback:{localFallBackPath}";
         if (!_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) || cached == null)
             try
             {
@@ -229,5 +215,170 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
             }
 
         return cached.TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value);
+    }
+
+    private Uri BuildRequestUri(string locale, string? @namespace, string? customGroup)
+    {
+        var baseUrl = _options.BaseUrl.TrimEnd('/');
+        var builder = new UriBuilder($"{baseUrl}/integration/{_options.ProjectId}/translations");
+
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        query["language"] = locale;
+        query["fallbackLanguage"] = _options.FallBackLanguage;
+
+        if (!string.IsNullOrWhiteSpace(@namespace))
+            query["namespace"] = @namespace;
+
+        if (!string.IsNullOrWhiteSpace(customGroup))
+            query["customGroup"] = customGroup;
+
+        builder.Query = query.ToString();
+        return builder.Uri;
+    }
+
+    private JsonObject? LoadLocalFile(string locale, string @namespace)
+    {
+        _options.LocalFallbackPaths.TryGetValue(locale, out var localFallbackPath);
+        if (string.IsNullOrWhiteSpace(localFallbackPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var text = File.ReadAllText(localFallbackPath);
+            var jsonNode = JsonNode.Parse(text);
+            var jsonObject = jsonNode?.AsObject();
+            if (jsonObject == null)
+            {
+                return null;
+            }
+            var found = jsonObject.TryGetPropertyValue(@namespace, out var node);
+            if (!found)
+            {
+                return null;
+            }
+
+            return node?.AsObject();
+        }
+        catch (Exception e)
+        {
+            _errorListener.OnError(ErrorSources.TranslationFallBackProvider, null, e, null);
+            return null;
+        }
+    }
+
+    private async Task<(JsonObject? dict, bool cacheable)> GetNamespaceCore(
+        string locale, 
+        string @namespace, 
+        string? customGroup,
+        CancellationToken cancellationToken
+    )
+    {
+        var localDict = LoadLocalFile(locale, @namespace);
+        
+        try
+        {
+            var uri = BuildRequestUri(locale, @namespace, customGroup);
+            var response = await _http.GetAsync(uri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _errorListener.OnError(ErrorSources.TranslationProvider, ErrorMessages.EnJsonRequestFailed, null, response);
+                return (localDict, false);
+            }
+
+            var remoteDict = await response.Content.ReadFromJsonAsync<JsonObject>(cancellationToken);
+
+            return (DeepMerge(localDict, remoteDict), true);
+        }
+        catch (Exception e)
+        {
+            _errorListener.OnError(ErrorSources.TranslationProvider, null, e, null);
+            return (null, false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<JsonObject?> GetNamespaceAsync(
+        string locale,
+        string @namespace,
+        string? customGroup,
+        CancellationToken cancellationToken
+    )
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+        {
+            throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
+        }
+
+        if (string.IsNullOrWhiteSpace(@namespace))
+        {
+            throw new ArgumentException(ErrorMessages.EnJsonKeyMissingNamespace, nameof(@namespace));
+        }
+        
+        var cacheKey = $"{CachePrefix}:locale:{locale}:namespace:{@namespace}:customGroup:{customGroup}";
+        var found = _cache.TryGetValue<JsonObject>(cacheKey, out var cached);
+        if (found && cached != null)
+        {
+            return cached;
+        }
+
+        var (dict, cacheable) = await GetNamespaceCore(locale, @namespace, customGroup, cancellationToken);
+        if (dict == null)
+        {
+            return null;
+        }
+
+        if (cacheable)
+        {
+            _cache.Set(cacheKey, dict, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes),
+            });
+        }
+    
+
+        return dict;
+    }
+    
+    /// <summary>
+    /// Not pure, modifies older if older exits. Avoids DeepClone, so
+    /// after merge, result will reference parts of the newer object.
+    /// </summary>
+    private static JsonObject? DeepMerge(JsonObject? older, JsonObject? newer) {
+        if (older is null)
+        {
+            return newer;
+        }
+        if (newer is null)
+        {
+            return older;
+        }
+        
+        foreach (var kv in newer)
+        {
+            if (!older.ContainsKey(kv.Key))
+            {
+                // not found, just move
+                older[kv.Key] = kv.Value;
+                continue;
+            }
+            
+            // merge them
+            
+            var oldValue = older[kv.Key];
+            var newValue = kv.Value;
+
+            if (oldValue is JsonObject oldObj && newValue is JsonObject newObj)
+            {
+                older[kv.Key] = DeepMerge(oldObj, newObj);
+            }
+            else
+            {
+                older[kv.Key] = newValue;
+            }
+        }
+
+        return older;
     }
 }

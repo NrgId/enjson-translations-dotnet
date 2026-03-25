@@ -62,6 +62,11 @@ public class MyService
         var value = await _provider.GetTranslationAsync("emails.user_registered.subject", "en");
         return string.IsNullOrWhiteSpace(value) ? "Title" : value;
     }
+    
+    public Task<JsonObject?> GetEntireNamespaceAsync() 
+    {
+        return _provider.GetNamespace("en", "errorCodes");
+    }
 }
 ```
 
