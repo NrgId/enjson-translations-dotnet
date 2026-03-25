@@ -22,11 +22,10 @@ Add configuration for the `EnJsonTranslations` section:
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
     "NamespaceDepth": 1,
-    "LocalFallbackPath": 
-    [
-        "en": "Resources/en.json",
-        "fr": "Resources/fr.json",
-    ],
+    "LocalFallbackPath": {
+      "en": "Resources/en.json",
+      "fr": "Resources/fr.json"
+    },
     "EnableUsageTracking": true,
     "UsageReportIntervalMinutes": 5,
     "UsageReportBatchSize": 200
