@@ -11,8 +11,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using NrgId.EnJson.Translations.Config;
 using NrgId.EnJson.Translations.Core;
-using NrgId.EnJson.Translations.Diagnostics;
-using NrgId.EnJson.Translations.Events;
 using NrgId.EnJson.Translations.Interfaces;
 using NrgId.EnJson.Translations.Services.Results;
 
@@ -27,18 +25,24 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     private readonly HttpClient _http;
     private readonly EnJsonTranslationsOptions _options;
     private readonly IEnJsonUsageTracker _usageTracker;
+    private readonly IEnJsonErrorListener? _errorListener;
 
     /// <summary>
     ///     Creates a new translation provider.
     /// </summary>
-    public EnJsonTranslationProvider(HttpClient http, IMemoryCache cache,
-        IOptions<EnJsonTranslationsOptions> options, IEnJsonUsageTracker usageTracker,
-        IEnJsonErrorAggregator errorAggregator)
+    public EnJsonTranslationProvider(
+        HttpClient http, 
+        IMemoryCache cache,
+        IOptions<EnJsonTranslationsOptions> options, 
+        IEnJsonUsageTracker usageTracker,
+        IEnJsonErrorListener? errorListener = null
+    )
     {
         _http = http;
         _cache = cache;
         _options = options.Value;
         _usageTracker = usageTracker;
+        _errorListener = errorListener;
 
         foreach (var fallbackPath in _options.LocalFallbackPaths)
             if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
@@ -46,12 +50,6 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         if (!string.IsNullOrEmpty(_options.ApiKey))
             _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
-
-        var aggregator = (EnJsonErrorAggregator)errorAggregator;
-        aggregator.Register<EnjsonErrorEventArgs>(
-            h => Error += h,
-            h => Error -= h
-        );
     }
 
     /// <inheritdoc />
@@ -72,11 +70,6 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
             .ConfigureAwait(false);
         return result.Found ? result.Value : result.Key;
     }
-
-    /// <summary>
-    ///     Event for api error
-    /// </summary>
-    public event EventHandler<EnjsonErrorEventArgs>? Error;
 
     /// <inheritdoc cref="GetTranslationAsync" />
     private async Task<EnJsonTranslationResult> GetTranslationResultAsync(string key, string locale,
@@ -177,7 +170,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         }
         catch (Exception e)
         {
-            OnError(new ApiEnjsonErrorEventArgs(e, ErrorSources.TranslationProvider));
+            _errorListener?.OnError(ErrorSources.TranslationProvider, null, e, null);
             return new Dictionary<string, string>();
         }
     }
@@ -231,15 +224,10 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
             }
             catch (Exception ex)
             {
-                OnError(new EnjsonErrorEventArgs(ex, ErrorSources.TranslationFallBackProvider));
+                _errorListener?.OnError(ErrorSources.TranslationFallBackProvider, null, ex, null);
                 return false;
             }
 
         return cached.TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value);
-    }
-
-    private void OnError(EnjsonErrorEventArgs e)
-    {
-        Error?.Invoke(this, e);
     }
 }

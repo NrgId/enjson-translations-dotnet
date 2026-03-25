@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using NrgId.EnJson.Translations.Config;
 using NrgId.EnJson.Translations.Core;
-using NrgId.EnJson.Translations.Diagnostics;
-using NrgId.EnJson.Translations.Events;
 using NrgId.EnJson.Translations.Interfaces;
 
 namespace NrgId.EnJson.Translations.Services;
@@ -21,6 +19,7 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 {
     private readonly HttpClient _http;
     private readonly EnJsonTranslationsOptions _options;
+    private readonly IEnJsonErrorListener? _errorListener;
 
     private readonly ConcurrentDictionary<string, byte> _pending = new(StringComparer.OrdinalIgnoreCase);
 
@@ -33,10 +32,11 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     public EnJsonUsageTracker(
         IHttpClientFactory httpClientFactory,
         IOptions<EnJsonTranslationsOptions> options,
-        IEnJsonErrorAggregator errorAggregator)
+        IEnJsonErrorListener? errorListener = null
+    )
     {
         _options = options.Value;
-
+        _errorListener = errorListener;
         _http = httpClientFactory.CreateClient(ServiceCollectionExtensions.EnJsonHttpClientName);
 
         if (!string.IsNullOrEmpty(_options.ApiKey))
@@ -46,12 +46,6 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
             _timer = new Timer(_ => _ = FlushAsync(), null,
                 TimeSpan.FromMinutes(_options.UsageReportIntervalMinutes),
                 TimeSpan.FromMinutes(_options.UsageReportIntervalMinutes));
-
-        var aggregator = (EnJsonErrorAggregator)errorAggregator;
-        aggregator.Register<ApiEnjsonErrorEventArgs>(
-            h => Error += h,
-            h => Error -= h
-        );
     }
 
     /// <summary>
@@ -71,11 +65,6 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
         var key = fullKey!;
         _pending.TryAdd(key, 0);
     }
-
-    /// <summary>
-    ///     Event for api error
-    /// </summary>
-    public event EventHandler<ApiEnjsonErrorEventArgs>? Error;
 
     private async Task FlushAsync()
     {
@@ -107,10 +96,7 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 
             if (!response.IsSuccessStatusCode)
             {
-                OnError(new ApiEnjsonErrorEventArgs(
-                    new HttpRequestException($"API returned {(int)response.StatusCode}"),
-                    ErrorSources.UsageTracker,
-                    (int)response.StatusCode));
+                _errorListener?.OnError(ErrorSources.UsageTracker, ErrorMessages.EnJsonRequestFailed, null, response);
                 return;
             }
 
@@ -119,16 +105,11 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
         }
         catch (Exception ex)
         {
-            OnError(new ApiEnjsonErrorEventArgs(ex, ErrorSources.UsageTracker));
+            _errorListener?.OnError(ErrorSources.UsageTracker, null, ex, null);
         }
         finally
         {
             Interlocked.Exchange(ref _isFlushing, 0);
         }
-    }
-
-    private void OnError(ApiEnjsonErrorEventArgs e)
-    {
-        Error?.Invoke(this, e);
     }
 }
