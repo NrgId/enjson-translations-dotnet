@@ -48,7 +48,20 @@ public class EnJsonTranslationsOptions
     public int NamespaceDepth { get; set; } = 1;
 
     /// <summary>
-    ///     Optional local fallback file path (e.g. Resources/en.json).
+    /// <para>
+    /// Local fallback file paths (e.g. Resources/en.json). Optional.
+    /// </para>
+    /// <para>
+    /// Keys are languages, values are paths to .json files.
+    /// </para>
+    /// <example>
+    /// <code>
+    /// "LocalFallbackPaths": {
+    ///   "en": "Resources/en.json",
+    ///   "fr": "Resources/fr.json"
+    /// },
+    /// </code>
+    /// </example>
     /// </summary>
     public Dictionary<string, string> LocalFallbackPaths { get; set; } = [];
 
