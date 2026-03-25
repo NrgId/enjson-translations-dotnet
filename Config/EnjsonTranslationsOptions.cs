@@ -50,7 +50,7 @@ public class EnJsonTranslationsOptions
     /// <summary>
     ///     Optional local fallback file path (e.g. Resources/en.json).
     /// </summary>
-    public Dictionary<string, string> LocalFallbackPath { get; set; } = [];
+    public Dictionary<string, string> LocalFallbackPaths { get; set; } = [];
 
     /// <summary>
     ///     Enables usage tracking to update last-used timestamps.

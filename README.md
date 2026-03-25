@@ -22,7 +22,7 @@ Add configuration for the `EnJsonTranslations` section:
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
     "NamespaceDepth": 1,
-    "LocalFallbackPath": {
+    "LocalFallbackPaths": {
       "en": "Resources/en.json",
       "fr": "Resources/fr.json"
     },

@@ -40,9 +40,9 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         _options = options.Value;
         _usageTracker = usageTracker;
 
-        foreach (var fallbackPath in _options.LocalFallbackPath)
+        foreach (var fallbackPath in _options.LocalFallbackPaths)
             if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
-                throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPath));
+                throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPaths));
 
         if (!string.IsNullOrEmpty(_options.ApiKey))
             _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
@@ -211,7 +211,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     {
         value = null;
 
-        _options.LocalFallbackPath.TryGetValue(language, out var localFallBackPath);
+        _options.LocalFallbackPaths.TryGetValue(language, out var localFallBackPath);
 
         if (string.IsNullOrWhiteSpace(localFallBackPath))
             return false;
