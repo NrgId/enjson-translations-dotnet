@@ -2,9 +2,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using NrgId.EnJson.Translations.BackgroundServices;
 using NrgId.EnJson.Translations.Config;
-using NrgId.EnJson.Translations.Diagnostics;
 using NrgId.EnJson.Translations.Interfaces;
 using NrgId.EnJson.Translations.Services;
 
@@ -69,14 +67,6 @@ public static class ServiceCollectionExtensions
         {
             var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
             http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-        });
-
-        services.AddSingleton<ErrorProcessorService>();
-
-        services.AddSingleton<IEnJsonErrorAggregator>(sp =>
-        {
-            sp.GetRequiredService<ErrorProcessorService>(); // force resolve service
-            return sp.GetRequiredService<EnJsonErrorAggregator>();
         });
 
         services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
