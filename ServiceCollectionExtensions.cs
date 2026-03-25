@@ -72,5 +72,7 @@ public static class ServiceCollectionExtensions
             var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
             http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
         });
+
+        services.AddSingleton<IEnJsonTranslationProvider, EnJsonTranslationProvider>();
     }
 }
