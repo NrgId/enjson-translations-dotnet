@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using NrgId.EnJson.Translations.Services.Results;
 
 namespace NrgId.EnJson.Translations.Interfaces;
 
@@ -9,6 +11,11 @@ namespace NrgId.EnJson.Translations.Interfaces;
 /// </summary>
 public interface IEnJsonTranslationProvider
 {
+    /// <summary>
+    /// Gets a list of <see cref="EnJsonLanguage"/>s added to the project
+    /// </summary>
+    Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken);
+    
     /// <summary>
     ///     Gets a translation for the specified locale and key asynchronously.
     /// </summary>

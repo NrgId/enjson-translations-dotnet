@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using NrgId.EnJson.Translations.Config;
 using NrgId.EnJson.Translations.Core;
 using NrgId.EnJson.Translations.Interfaces;
+using NrgId.EnJson.Translations.Services.Results;
 
 namespace NrgId.EnJson.Translations.Services;
 
@@ -35,6 +36,37 @@ internal sealed class EnJsonHttpClient
 		{
 			_httpClient.DefaultRequestHeaders.Add("apiKey", opt.ApiKey);
 		}
+	}
+	
+	public async Task<List<EnJsonLanguage>?> GetLanguages(bool includeInactive, CancellationToken cancellationToken)
+	{
+		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/languages";
+		var query = HttpUtility.ParseQueryString(string.Empty);
+		if (includeInactive)
+		{
+			query["includeInactive"] = includeInactive.ToString();
+		}
+
+		var queryString = query.ToString();
+
+		string requestUri;
+		if (queryString.Length > 0)
+		{
+			requestUri = $"{requestEndpoint}?{query}";
+		}
+		else
+		{
+			requestUri = requestEndpoint;
+		}
+		
+		var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+		if (!response.IsSuccessStatusCode)
+		{
+			_enJsonErrorListener.OnError(ErrorSources.TranslationProvider, ErrorMessages.EnJsonRequestFailed, null, response);
+			return null;
+		}
+		
+		return await response.Content.ReadFromJsonAsync<List<EnJsonLanguage>>(cancellationToken).ConfigureAwait(false);
 	}
 
 	public async Task<T?> GetTranslations<T>(

@@ -66,6 +66,11 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         return result.Found ? result.Value : result.Key;
     }
 
+    public Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken)
+    {
+        return _enJsonHttpClient.GetLanguages(includeInactive, cancellationToken);
+    }
+
     /// <inheritdoc />
     public async Task<string?> GetTranslationAsync(string key, string locale, string? customGroup = null,
         string? cacheNamespace = null, CancellationToken ct = default)
