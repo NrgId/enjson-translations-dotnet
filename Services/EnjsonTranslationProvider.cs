@@ -62,17 +62,8 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
     }
 
     /// <inheritdoc />
-    public async Task<string?> GetTranslationAsync(string key, string locale, string? customGroup = null,
+    public async Task<EnJsonTranslationResult> GetTranslationAsync(string key, string locale, string? customGroup = null,
         string? cacheNamespace = null, CancellationToken ct = default)
-    {
-        var result = await GetTranslationResultAsync(key, locale, customGroup, cacheNamespace, ct)
-            .ConfigureAwait(false);
-        return result.Found ? result.Value : result.Key;
-    }
-
-    /// <inheritdoc cref="GetTranslationAsync" />
-    private async Task<EnJsonTranslationResult> GetTranslationResultAsync(string key, string locale,
-        string? customGroup = null, string? cacheNamespace = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(locale))
             throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));

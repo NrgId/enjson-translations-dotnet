@@ -3,7 +3,7 @@ namespace NrgId.EnJson.Translations.Services.Results;
 /// <summary>
 ///     Result of a translation lookup.
 /// </summary>
-internal class EnJsonTranslationResult
+public record EnJsonTranslationResult
 {
     /// <summary>
     ///     Creates a new translation result.

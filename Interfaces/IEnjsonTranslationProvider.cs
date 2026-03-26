@@ -19,7 +19,7 @@ public interface IEnJsonTranslationProvider
     /// <summary>
     ///     Gets a translation for the specified locale and key asynchronously.
     /// </summary>
-    Task<string?> GetTranslationAsync(
+    Task<EnJsonTranslationResult> GetTranslationAsync(
         string key,
         string locale,
         string? customGroup = null,
