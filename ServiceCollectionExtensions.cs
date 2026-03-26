@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
     private static void AddServices(IServiceCollection services)
     {
         services.AddMemoryCache();
+        services.AddHttpClient();
         services.AddSingleton<EnJsonHttpClient>();
         services.AddSingleton<IEnJsonErrorListener, DefaultEnJsonErrorListener>();
         services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
