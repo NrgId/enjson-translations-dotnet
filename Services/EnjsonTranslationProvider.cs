@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,6 +50,9 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes),
         };
 
+        if (string.IsNullOrWhiteSpace(_options.ProjectId))
+            throw new ArgumentException(ErrorMessages.EnJsonMissingProjectId, nameof(_options.ProjectId));
+
         foreach (var fallbackPath in _options.LocalFallbackPaths)
             if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
                 throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPaths));
@@ -58,145 +60,104 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
     public Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken)
     {
-        return _enJsonHttpClient.GetLanguagesAsync(includeInactive, cancellationToken);
+        var cacheKey = $"{CachePrefix}:{_options.ProjectId}:languages:{includeInactive}";
+     
+        return GetTroughCacheAsync(
+            cacheKey,
+            async () =>
+            {
+                var languages = await _enJsonHttpClient.GetLanguagesAsync(includeInactive, cancellationToken);
+                return (languages, true);
+            }
+        );
     }
 
     /// <inheritdoc />
-    public async Task<EnJsonTranslationResult> GetTranslationAsync(string key, string locale, string? customGroup = null,
-        string? cacheNamespace = null, CancellationToken ct = default)
+    public Task<string?> GetTranslationAsync(string locale, string key, string? customGroup = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(locale))
+        {
             throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
+        }
 
         if (string.IsNullOrWhiteSpace(key))
-            return new EnJsonTranslationResult(string.Empty, null, false);
-
-        if (string.IsNullOrWhiteSpace(_options.ProjectId))
-            throw new ArgumentException(ErrorMessages.EnJsonMissingProjectId, nameof(_options.ProjectId));
-
-        var hasInlineNamespace =
-            TrySplitKey(key, _options.NamespaceDepth, out var parsedNamespace, out _);
-
-        if (!string.IsNullOrWhiteSpace(cacheNamespace))
         {
-            if (!hasInlineNamespace)
-                throw new ArgumentException(ErrorMessages.EnJsonKeyMissingNamespace, nameof(key));
-
-            if (!string.Equals(parsedNamespace, cacheNamespace, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException(ErrorMessages.EnJsonNamespaceMismatch, nameof(key));
+            return Task.FromResult<string?>(null);
         }
 
-        var effectiveNamespace = cacheNamespace ?? (hasInlineNamespace ? parsedNamespace : null);
-
-        var fullKeyForTracking = key;
-
-        _usageTracker.Track(fullKeyForTracking);
-
-        IReadOnlyDictionary<string, string> dict;
-        try
-        {
-            dict = await GetTranslationsDictionaryAsync(locale, effectiveNamespace, customGroup, ct)
-                .ConfigureAwait(false);
-        }
-        catch
-        {
-            return TryGetLocalFallbackValue(fullKeyForTracking, locale, out var localValue)
-                ? new EnJsonTranslationResult(fullKeyForTracking, localValue, true)
-                : new EnJsonTranslationResult(fullKeyForTracking, null, false, ErrorMessages.EnJsonRequestFailed);
-        }
-
-        if (dict.TryGetValue(fullKeyForTracking, out var value) && !string.IsNullOrWhiteSpace(value))
-            return new EnJsonTranslationResult(fullKeyForTracking, value, true);
-
-        return TryGetLocalFallbackValue(fullKeyForTracking, locale, out var fallbackValue)
-            ? new EnJsonTranslationResult(fullKeyForTracking, fallbackValue, true)
-            : new EnJsonTranslationResult(fullKeyForTracking, null, false);
+        _usageTracker.Track(key);
+        
+        var cacheKey = $"{CachePrefix}:{_options.ProjectId}:translation:locale:{locale}:key:{key}:customGroup:{customGroup}";
+        return GetTroughCacheAsync(
+            cacheKey,
+            async () =>
+            {
+                var value = await GetTranslationCoreAsync(locale, key, customGroup, ct);
+                return (value, value != null);
+            }
+        );
     }
 
-
-    /// <summary>
-    ///     Gets translations dictionary
-    /// </summary>
-    private async Task<IReadOnlyDictionary<string, string>> GetTranslationsDictionaryAsync(string locale,
-        string? @namespace, string? customGroup, CancellationToken cancellationToken)
+    private async Task<string?> GetTranslationCoreAsync(string locale, string key, string? customGroup = null, CancellationToken ct = default)
     {
-        var namespaceKey = string.IsNullOrWhiteSpace(@namespace) ? "root" : @namespace;
-        var customGroupKey = string.IsNullOrWhiteSpace(customGroup) ? "global" : customGroup;
-        var cacheKey = $"{CachePrefix}:{_options.ProjectId}:{locale}:{namespaceKey}:{customGroupKey}";
-        if (_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) && cached != null)
-            return cached;
-
-        try
-        {
-            var dict = await _enJsonHttpClient.GetTranslationsAsync<IReadOnlyDictionary<string, string>>(locale, @namespace, customGroup, false, cancellationToken);
-            if (dict != null)
+        if (_options.Nested)
+        {        
+            var keyParts = key.Split('.');
+            string? @namespace = null;
+            if (keyParts.Length > 1)
             {
-                _cache.Set(cacheKey, dict, _memoryCacheEntryOptions);
+                @namespace = keyParts[0];
+            }
+        
+            var dict = await GetNamespaceAsync(locale, @namespace, customGroup, ct);
+            if (dict == null)
+            {
+                return null;
             }
 
-            return dict ?? new Dictionary<string, string>();
+            return TraverseTree(keyParts, @namespace, dict);
         }
-        catch (Exception e)
+        else
         {
-            _errorListener.OnError(ErrorSources.TranslationProvider, null, e, null);
-            return new Dictionary<string, string>();
-        }
-    }
-
-    private static bool TrySplitKey(string key, int namespaceDepth, out string? @namespace, out string lookupKey)
-    {
-        @namespace = null;
-        lookupKey = key;
-
-        if (namespaceDepth <= 0)
-            return false;
-
-        var parts = key.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length <= 1)
-            return false;
-
-        var depth = Math.Min(namespaceDepth, parts.Length - 1);
-        @namespace = string.Join(".", parts, 0, depth);
-        lookupKey = string.Join(".", parts, depth, parts.Length - depth);
-        if (string.IsNullOrWhiteSpace(lookupKey))
-        {
-            lookupKey = key;
-            @namespace = null;
-            return false;
-        }
-
-        return true;
-    }
-
-    private bool TryGetLocalFallbackValue(string key, string locale, out string? value)
-    {
-        value = null;
-
-        _options.LocalFallbackPaths.TryGetValue(locale, out var localFallBackPath);
-
-        if (string.IsNullOrWhiteSpace(localFallBackPath))
-            return false;
-
-        var cacheKey = $"{CachePrefix}:fallback:{localFallBackPath}";
-        if (!_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) || cached == null)
-            try
+            var dict = await GetNamespaceAsync(locale, null, customGroup, ct);
+            if (dict == null)
             {
-                var json = File.ReadAllText(localFallBackPath);
-                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
-                           ?? new Dictionary<string, string>();
-                cached = dict;
-                _cache.Set(cacheKey, cached, _memoryCacheEntryOptions);
-            }
-            catch (Exception ex)
-            {
-                _errorListener.OnError(ErrorSources.TranslationFallBackProvider, null, ex, null);
-                return false;
+                return null;
             }
 
-        return cached.TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value);
+            return TraverseTree([key], null, dict);
+        }
     }
 
-    private JsonObject? LoadLocalFile(string locale, string @namespace)
+    private static string? TraverseTree(string[] keyParts, string? @namespace, JsonObject dict)
+    {
+        JsonNode? currentNode = dict;
+        var startIndex = @namespace != null ? 1 : 0; // skip namespace if used
+        for (var i = startIndex; i < keyParts.Length; i++)
+        {
+            if (currentNode is not JsonObject obj)
+            {
+                return null;
+            }
+
+            var found = obj.TryGetPropertyValue(keyParts[i], out var nextNode);
+            if (!found)
+            {
+                return null;
+            }
+            
+            currentNode = nextNode;
+        }
+
+        if (currentNode is JsonObject)
+        {
+            return null;
+        }
+
+        return currentNode?.ToString();
+    }
+    
+    private string? ReadFallbackFile(string locale)
     {
         _options.LocalFallbackPaths.TryGetValue(locale, out var localFallbackPath);
         if (string.IsNullOrWhiteSpace(localFallbackPath))
@@ -206,13 +167,36 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         try
         {
-            var text = File.ReadAllText(localFallbackPath);
+            return File.ReadAllText(localFallbackPath);
+        }
+        catch (Exception e)
+        {
+            _errorListener.OnError(ErrorSources.TranslationFallBackProvider, ErrorMessages.EnJsonFallbackReadFailed, e, null);
+            return null;
+        }
+    }
+    
+    private JsonObject? GetFallbackNamespace(string locale, string? @namespace)
+    {
+        try
+        {
+            var text = ReadFallbackFile(locale);
+            if (text == null)
+            {
+                return null;
+            }
             var jsonNode = JsonNode.Parse(text);
             var jsonObject = jsonNode?.AsObject();
             if (jsonObject == null)
             {
                 return null;
             }
+
+            if (@namespace == null)
+            {
+                return jsonObject;
+            }
+
             var found = jsonObject.TryGetPropertyValue(@namespace, out var node);
             if (!found)
             {
@@ -230,16 +214,16 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
     private async Task<(JsonObject? dict, bool cacheable)> GetNamespaceCoreAsync(
         string locale, 
-        string @namespace, 
+        string? @namespace, 
         string? customGroup,
         CancellationToken cancellationToken
     )
     {
-        var localDict = LoadLocalFile(locale, @namespace);
+        var localDict = GetFallbackNamespace(locale, @namespace);
         
         try
         {
-            var remoteDict = await _enJsonHttpClient.GetTranslationsAsync<JsonObject>(locale, @namespace, customGroup, true, cancellationToken);
+            var remoteDict = await _enJsonHttpClient.GetTranslationsAsync<JsonObject>(locale, @namespace, customGroup, cancellationToken);
             if (remoteDict == null)
             {
                 return (localDict, false);
@@ -255,9 +239,9 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
     }
 
     /// <inheritdoc />
-    public async Task<JsonObject?> GetNamespaceAsync(
+    public Task<JsonObject?> GetNamespaceAsync(
         string locale,
-        string @namespace,
+        string? @namespace,
         string? customGroup,
         CancellationToken cancellationToken
     )
@@ -266,31 +250,12 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         {
             throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
         }
-
-        if (string.IsNullOrWhiteSpace(@namespace))
-        {
-            throw new ArgumentException(ErrorMessages.EnJsonKeyMissingNamespace, nameof(@namespace));
-        }
         
         var cacheKey = $"{CachePrefix}:locale:{locale}:namespace:{@namespace}:customGroup:{customGroup}";
-        var found = _cache.TryGetValue<JsonObject>(cacheKey, out var cached);
-        if (found && cached != null)
-        {
-            return cached;
-        }
-
-        var (dict, cacheable) = await GetNamespaceCoreAsync(locale, @namespace, customGroup, cancellationToken);
-        if (dict == null)
-        {
-            return null;
-        }
-
-        if (cacheable)
-        {
-            _cache.Set(cacheKey, dict, _memoryCacheEntryOptions);
-        }
-
-        return dict;
+        return GetTroughCacheAsync(
+            cacheKey,
+            () => GetNamespaceCoreAsync(locale, @namespace, customGroup, cancellationToken)
+        );
     }
     
     /// <summary>
@@ -334,5 +299,28 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         }
 
         return older;
+    }
+
+    private async Task<T?> GetTroughCacheAsync<T>(string cacheKey, Func<Task<(T? data, bool cacheable)>> fetcher)
+        where T : class
+    {
+        var found = _cache.TryGetValue<T>(cacheKey, out var cached);
+        if (found && cached != null)
+        {
+            return cached;
+        }
+
+        var (data, cacheable) = await fetcher();
+        if (data == null)
+        {
+            return null;
+        }
+
+        if (cacheable)
+        {
+            _cache.Set(cacheKey, data, _memoryCacheEntryOptions);
+        }
+
+        return data;
     }
 }

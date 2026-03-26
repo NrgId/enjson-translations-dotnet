@@ -11,6 +11,11 @@ public static class ErrorMessages
     public const string EnJsonFallbackNotFound = "EnJson_fallback_not_found";
 
     /// <summary>
+    ///     Reading file from disk failed
+    /// </summary>
+    public const string EnJsonFallbackReadFailed = "EnJson_fallback_read_failed";
+
+    /// <summary>
     ///     Localization not provided
     /// </summary>
     public const string EnJsonMissingLocale = "EnJson_missing_locale";
@@ -34,4 +39,5 @@ public static class ErrorMessages
     ///     Request failed
     /// </summary>
     public const string EnJsonRequestFailed = "EnJson_request_failed";
+    
 }

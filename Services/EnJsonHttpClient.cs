@@ -73,7 +73,6 @@ internal sealed class EnJsonHttpClient
 		string locale, 
 		string? @namespace, 
 		string? customGroup, 
-		bool? nested,
 		CancellationToken cancellationToken
 	) where T : class
 	{
@@ -82,10 +81,8 @@ internal sealed class EnJsonHttpClient
 		var query = HttpUtility.ParseQueryString(string.Empty);
 		query["language"] = locale;
 		query["fallbackLanguage"] = _options.Value.FallBackLanguage;
-		if (nested == true)
-		{
-			query["nested"] = "true";
-		}
+		query["nested"] = _options.Value.Nested.ToString();
+
 		if (!string.IsNullOrWhiteSpace(@namespace))
 		{
 			query["namespace"] = @namespace;

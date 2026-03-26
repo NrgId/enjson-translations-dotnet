@@ -43,9 +43,9 @@ public class EnJsonTranslationsOptions
     public string FallBackLanguage { get; set; } = "en";
 
     /// <summary>
-    ///     Namespace depth used when parsing keys like "emails.user.created".
+    ///     If true, sets it for network requests, and expects nested fallback files 
     /// </summary>
-    public int NamespaceDepth { get; set; } = 1;
+    public bool Nested { get; set; } = true;
 
     /// <summary>
     /// <para>
