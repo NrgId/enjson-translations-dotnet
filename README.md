@@ -21,10 +21,10 @@ Add configuration for the `EnJsonTranslations` section:
     "CacheMinutes": 5,
     "HttpTimeoutSeconds": 20,
     "DefaultLocale": "en",
-    "NamespaceDepth": 1,
+    "Nested": true,
     "LocalFallbackPath": {
         "en": "Resources/en.json",
-        "fr": "Resources/fr.json",
+        "fr": "Resources/fr.json"
     },
     "EnableUsageTracking": true,
     "UsageReportIntervalMinutes": 5,
@@ -59,8 +59,8 @@ public class MyService
 
     public async Task<string> GetTitleAsync()
     {
-        var value = await _provider.GetTranslationAsync("emails.user_registered.subject", "en");
-        return string.IsNullOrWhiteSpace(value) ? "Title" : value;
+        var value = await _provider.GetTranslationAsync("en", "emails.user_registered.subject");
+        return value ?? "Title";
     }
     
     public Task<JsonObject?> GetEntireNamespaceAsync() 
