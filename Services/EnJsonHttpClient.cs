@@ -41,19 +41,27 @@ internal sealed class EnJsonHttpClient
 		string locale, 
 		string? @namespace, 
 		string? customGroup, 
+		bool? nested,
 		CancellationToken cancellationToken
 	) where T : class
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/translations";
+
 		var query = HttpUtility.ParseQueryString(string.Empty);
 		query["language"] = locale;
 		query["fallbackLanguage"] = _options.Value.FallBackLanguage;
-
+		if (nested == true)
+		{
+			query["nested"] = "true";
+		}
 		if (!string.IsNullOrWhiteSpace(@namespace))
+		{
 			query["namespace"] = @namespace;
-
+		}
 		if (!string.IsNullOrWhiteSpace(customGroup))
+		{
 			query["customGroup"] = customGroup;
+		}
 
 		var requestUri = $"{requestEndpoint}?{query}";
 		

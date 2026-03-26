@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -141,7 +142,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         try
         {
-            var dict = await _enJsonHttpClient.GetTranslations<IReadOnlyDictionary<string, string>>(locale, @namespace, customGroup, cancellationToken);
+            var dict = await _enJsonHttpClient.GetTranslations<IReadOnlyDictionary<string, string>>(locale, @namespace, customGroup, false, cancellationToken);
             if (dict != null)
             {
                 _cache.Set(cacheKey, dict, _memoryCacheEntryOptions);
@@ -252,7 +253,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         
         try
         {
-            var remoteDict = await _enJsonHttpClient.GetTranslations<JsonObject>(locale, @namespace, customGroup, cancellationToken);
+            var remoteDict = await _enJsonHttpClient.GetTranslations<JsonObject>(locale, @namespace, customGroup, true, cancellationToken);
             if (remoteDict == null)
             {
                 return (localDict, false);
@@ -307,8 +308,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
     }
     
     /// <summary>
-    /// Not pure, modifies older if older exits. Avoids DeepClone, so
-    /// after merge, result will reference parts of the newer object.
+    /// Not pure, returns modified older, newer gets used up and becomes invalid.
     /// </summary>
     private static JsonObject? DeepMerge(JsonObject? older, JsonObject? newer) {
         if (older is null)
@@ -320,11 +320,13 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             return older;
         }
         
-        foreach (var kv in newer)
+        // to list needed to detach from newer
+        foreach (var kv in newer.ToList())
         {
             if (!older.ContainsKey(kv.Key))
             {
                 // not found, just move
+                newer.Remove(kv.Key); // must be detached from newer first
                 older[kv.Key] = kv.Value;
                 continue;
             }
@@ -340,6 +342,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             }
             else
             {
+                newer.Remove(kv.Key);
                 older[kv.Key] = newValue;
             }
         }
