@@ -28,16 +28,6 @@ public interface IEnJsonTranslationProvider
     );
 
     /// <summary>
-    ///     Gets a translation for the specified locale and key synchronously.
-    /// </summary>
-    string? GetTranslation(
-        string key,
-        string locale,
-        string? customGroup = null,
-        string? cacheNamespace = null
-    );
-
-    /// <summary>
     /// Gets all translations for the namespace, merged with local fallbacks if available,
     /// but doesn't report usage. For now, only top-level namespace is supported.
     /// </summary>

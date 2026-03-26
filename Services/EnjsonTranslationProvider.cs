@@ -56,16 +56,6 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
                 throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPaths));
     }
 
-    /// <inheritdoc />
-    public string? GetTranslation(string key, string locale, string? customGroup = null,
-        string? cacheNamespace = null)
-    {
-        var result = GetTranslationResultAsync(key, locale, customGroup, cacheNamespace)
-            .ConfigureAwait(false).GetAwaiter().GetResult();
-
-        return result.Found ? result.Value : result.Key;
-    }
-
     public Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken)
     {
         return _enJsonHttpClient.GetLanguages(includeInactive, cancellationToken);
