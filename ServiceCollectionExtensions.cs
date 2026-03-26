@@ -13,8 +13,6 @@ namespace NrgId.EnJson.Translations;
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-    internal const string EnJsonHttpClientName = "EnJsonTranslations";
-
     /// <summary>
     /// Registers EnJson translations using configuration set.
     /// </summary>
@@ -62,21 +60,9 @@ public static class ServiceCollectionExtensions
     private static void AddServices(IServiceCollection services)
     {
         services.AddMemoryCache();
-
+        services.AddSingleton<EnJsonHttpClient>();
         services.AddSingleton<IEnJsonErrorListener, DefaultEnJsonErrorListener>();
-
-        services.AddHttpClient(EnJsonHttpClientName, (sp, http) =>
-        {
-            var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
-            http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-        });
-
         services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
-
-        services.AddHttpClient<IEnJsonTranslationProvider, EnJsonTranslationProvider>((sp, http) =>
-        {
-            var opt = sp.GetRequiredService<IOptions<EnJsonTranslationsOptions>>().Value;
-            http.Timeout = TimeSpan.FromSeconds(opt.HttpTimeoutSeconds);
-        });
+        services.AddSingleton<IEnJsonTranslationProvider, EnJsonTranslationProvider>();
     }
 }

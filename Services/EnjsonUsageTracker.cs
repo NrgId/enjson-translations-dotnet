@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -15,9 +13,9 @@ namespace NrgId.EnJson.Translations.Services;
 /// <summary>
 ///     Default implementation of <see cref="IEnJsonUsageTracker" />.
 /// </summary>
-public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
+internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 {
-    private readonly HttpClient _http;
+    private readonly EnJsonHttpClient _enJsonHttpClient;
     private readonly EnJsonTranslationsOptions _options;
     private readonly IEnJsonErrorListener _errorListener;
 
@@ -30,17 +28,14 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     ///     Creates a new usage tracker.
     /// </summary>
     public EnJsonUsageTracker(
-        IHttpClientFactory httpClientFactory,
+        EnJsonHttpClient enJsonHttpClient,
         IOptions<EnJsonTranslationsOptions> options,
         IEnJsonErrorListener errorListener
     )
     {
         _options = options.Value;
         _errorListener = errorListener;
-        _http = httpClientFactory.CreateClient(ServiceCollectionExtensions.EnJsonHttpClientName);
-
-        if (!string.IsNullOrEmpty(_options.ApiKey))
-            _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
+        _enJsonHttpClient = enJsonHttpClient;
 
         if (_options.EnableUsageTracking && _options.UsageReportIntervalMinutes > 0)
             _timer = new Timer(_ => _ = FlushAsync(), null,
@@ -76,27 +71,23 @@ public sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 
         try
         {
-            if (_pending.IsEmpty)
+            if (_pending.IsEmpty) 
+            {
                 return;
+            }
 
             var batch = _pending.Keys
                 .Take(Math.Max(1, _options.UsageReportBatchSize))
                 .ToList();
 
             if (batch.Count == 0)
+            {
                 return;
+            }
 
-            var url = $"{_options.BaseUrl.TrimEnd('/')}/integration/{_options.ProjectId}/last-used";
-            var payload = new
+            var ok = await _enJsonHttpClient.PostLastUsed(batch);
+            if (!ok)
             {
-                translationKeys = batch
-            };
-
-            var response = await _http.PostAsJsonAsync(url, payload).ConfigureAwait(false);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _errorListener.OnError(ErrorSources.UsageTracker, ErrorMessages.EnJsonRequestFailed, null, response);
                 return;
             }
 

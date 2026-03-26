@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using NrgId.EnJson.Translations.Config;
@@ -20,39 +17,42 @@ namespace NrgId.EnJson.Translations.Services;
 /// <summary>
 ///     EnJson implementation of <see cref="IEnJsonTranslationProvider" />.
 /// </summary>
-public class EnJsonTranslationProvider : IEnJsonTranslationProvider
+internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 {
     private readonly IMemoryCache _cache;
-    private readonly HttpClient _http;
+    private readonly EnJsonHttpClient _enJsonHttpClient;
     private readonly EnJsonTranslationsOptions _options;
     private readonly IEnJsonUsageTracker _usageTracker;
     private readonly IEnJsonErrorListener _errorListener;
+    
 
     private const string CachePrefix = "enjson";
+    private readonly MemoryCacheEntryOptions _memoryCacheEntryOptions;
 
     /// <summary>
     ///     Creates a new translation provider.
     /// </summary>
     public EnJsonTranslationProvider(
-        HttpClient http, 
         IMemoryCache cache,
         IOptions<EnJsonTranslationsOptions> options, 
         IEnJsonUsageTracker usageTracker,
+        EnJsonHttpClient enJsonHttpClient,
         IEnJsonErrorListener errorListener
     )
     {
-        _http = http;
+        _enJsonHttpClient = enJsonHttpClient;
         _cache = cache;
         _options = options.Value;
         _usageTracker = usageTracker;
         _errorListener = errorListener;
+        _memoryCacheEntryOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes),
+        };
 
         foreach (var fallbackPath in _options.LocalFallbackPaths)
             if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
                 throw new ArgumentException(ErrorMessages.EnJsonFallbackNotFound, nameof(_options.LocalFallbackPaths));
-
-        if (!string.IsNullOrEmpty(_options.ApiKey))
-            _http.DefaultRequestHeaders.Add("apiKey", _options.ApiKey);
     }
 
     /// <inheritdoc />
@@ -131,7 +131,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
     ///     Gets translations dictionary
     /// </summary>
     private async Task<IReadOnlyDictionary<string, string>> GetTranslationsDictionaryAsync(string locale,
-        string? @namespace, string? customGroup, CancellationToken ct)
+        string? @namespace, string? customGroup, CancellationToken cancellationToken)
     {
         var namespaceKey = string.IsNullOrWhiteSpace(@namespace) ? "root" : @namespace;
         var customGroupKey = string.IsNullOrWhiteSpace(customGroup) ? "global" : customGroup;
@@ -139,20 +139,15 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         if (_cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached) && cached != null)
             return cached;
 
-        var uri = BuildRequestUri(locale, @namespace, customGroup);
         try
         {
-            var dict = await _http.GetFromJsonAsync<Dictionary<string, string>>(uri, ct)
-                       ?? new Dictionary<string, string>();
-
-            IReadOnlyDictionary<string, string> ro = dict;
-
-            _cache.Set(cacheKey, dict, new MemoryCacheEntryOptions
+            var dict = await _enJsonHttpClient.GetTranslations<IReadOnlyDictionary<string, string>>(locale, @namespace, customGroup, cancellationToken);
+            if (dict != null)
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes)
-            });
+                _cache.Set(cacheKey, dict, _memoryCacheEntryOptions);
+            }
 
-            return ro;
+            return dict ?? new Dictionary<string, string>();
         }
         catch (Exception e)
         {
@@ -203,10 +198,7 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
                 var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
                            ?? new Dictionary<string, string>();
                 cached = dict;
-                _cache.Set(cacheKey, cached, new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes)
-                });
+                _cache.Set(cacheKey, cached, _memoryCacheEntryOptions);
             }
             catch (Exception ex)
             {
@@ -215,25 +207,6 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
             }
 
         return cached.TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value);
-    }
-
-    private Uri BuildRequestUri(string locale, string? @namespace, string? customGroup)
-    {
-        var baseUrl = _options.BaseUrl.TrimEnd('/');
-        var builder = new UriBuilder($"{baseUrl}/integration/{_options.ProjectId}/translations");
-
-        var query = HttpUtility.ParseQueryString(string.Empty);
-        query["language"] = locale;
-        query["fallbackLanguage"] = _options.FallBackLanguage;
-
-        if (!string.IsNullOrWhiteSpace(@namespace))
-            query["namespace"] = @namespace;
-
-        if (!string.IsNullOrWhiteSpace(customGroup))
-            query["customGroup"] = customGroup;
-
-        builder.Query = query.ToString();
-        return builder.Uri;
     }
 
     private JsonObject? LoadLocalFile(string locale, string @namespace)
@@ -279,15 +252,11 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
         
         try
         {
-            var uri = BuildRequestUri(locale, @namespace, customGroup);
-            var response = await _http.GetAsync(uri, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            var remoteDict = await _enJsonHttpClient.GetTranslations<JsonObject>(locale, @namespace, customGroup, cancellationToken);
+            if (remoteDict == null)
             {
-                _errorListener.OnError(ErrorSources.TranslationProvider, ErrorMessages.EnJsonRequestFailed, null, response);
                 return (localDict, false);
             }
-
-            var remoteDict = await response.Content.ReadFromJsonAsync<JsonObject>(cancellationToken);
 
             return (DeepMerge(localDict, remoteDict), true);
         }
@@ -331,12 +300,8 @@ public class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         if (cacheable)
         {
-            _cache.Set(cacheKey, dict, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes),
-            });
+            _cache.Set(cacheKey, dict, _memoryCacheEntryOptions);
         }
-    
 
         return dict;
     }
