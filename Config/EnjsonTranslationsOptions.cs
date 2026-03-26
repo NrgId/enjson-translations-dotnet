@@ -5,7 +5,7 @@ namespace NrgId.EnJson.Translations.Config;
 /// <summary>
 ///     Configuration options for EnJson translations.
 /// </summary>
-public class EnJsonTranslationsOptions
+public record EnJsonTranslationsOptions
 {
     /// <summary>
     ///     Configuration section name for EnJson translations.
@@ -66,17 +66,29 @@ public class EnJsonTranslationsOptions
     public Dictionary<string, string> LocalFallbackPaths { get; set; } = [];
 
     /// <summary>
-    ///     Enables usage tracking to update last-used timestamps.
+    /// Usage tracking configuration.
     /// </summary>
-    public bool EnableUsageTracking { get; set; } = true;
-
+    public UsageTrackingSection UsageTracking { get; set; } = new();
+    
     /// <summary>
-    ///     Usage reporting interval in minutes.
+    /// Usage tracking configuration options
     /// </summary>
-    public int UsageReportIntervalMinutes { get; set; } = 5;
+    public record UsageTrackingSection
+    {
+        /// <summary>
+        ///     Enables usage tracking to update last-used timestamps.
+        /// </summary>
+        public bool Enabled { get; set; } = true;
 
-    /// <summary>
-    ///     Max number of keys per usage reporting batch.
-    /// </summary>
-    public int UsageReportBatchSize { get; set; } = 200;
+        /// <summary>
+        ///     Usage reporting interval in minutes.
+        /// </summary>
+        public int ReportIntervalMinutes { get; set; } = 5;
+
+        /// <summary>
+        ///     Max number of keys per usage reporting batch.
+        /// </summary>
+        public int ReportBatchSize { get; set; } = 200;
+
+    }
 }

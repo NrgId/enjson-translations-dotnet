@@ -8,5 +8,10 @@ public interface IEnJsonUsageTracker
     /// <summary>
     ///     Records usage for the given full key.
     /// </summary>
-    void Track(string? fullKey);
+    /// <example>
+    /// <code>
+    /// usageTracker.Track("loginForm.email.placeholder");
+    /// </code>
+    /// </example>
+    void Track(string fullKey);
 }

@@ -26,9 +26,11 @@ Add configuration for the `EnJsonTranslations` section:
         "en": "Resources/en.json",
         "fr": "Resources/fr.json"
     },
-    "EnableUsageTracking": true,
-    "UsageReportIntervalMinutes": 5,
-    "UsageReportBatchSize": 200
+    "UsageTracking": {
+        "Enabled": false,
+        "ReportIntervalMinutes": 5,
+        "ReportBatchSize": 200
+    }
   }
 }
 ```

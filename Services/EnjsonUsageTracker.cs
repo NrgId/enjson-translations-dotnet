@@ -24,6 +24,8 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     private readonly Timer? _timer;
     private int _isFlushing;
 
+    private readonly bool _enabled;
+
     /// <summary>
     ///     Creates a new usage tracker.
     /// </summary>
@@ -36,11 +38,15 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
         _options = options.Value;
         _errorListener = errorListener;
         _enJsonHttpClient = enJsonHttpClient;
+        _enabled = _options.UsageTracking is { Enabled: true, ReportIntervalMinutes: > 0 };
 
-        if (_options.EnableUsageTracking && _options.UsageReportIntervalMinutes > 0)
-            _timer = new Timer(_ => _ = FlushAsync(), null,
-                TimeSpan.FromMinutes(_options.UsageReportIntervalMinutes),
-                TimeSpan.FromMinutes(_options.UsageReportIntervalMinutes));
+        if (!_enabled)
+        {
+            return;
+        }
+      
+        var timeSpan = TimeSpan.FromMinutes(_options.UsageTracking.ReportIntervalMinutes);
+        _timer = new Timer(_ => _ = FlushAsync(), null, timeSpan, timeSpan);
     }
 
     /// <summary>
@@ -52,10 +58,12 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
     }
 
     /// <inheritdoc />
-    public void Track(string? fullKey)
+    public void Track(string fullKey)
     {
-        if (!_options.EnableUsageTracking || string.IsNullOrWhiteSpace(fullKey))
+        if (!_enabled || string.IsNullOrWhiteSpace(fullKey))
+        {
             return;
+        }
 
         var key = fullKey!;
         _pending.TryAdd(key, 0);
@@ -63,11 +71,10 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 
     private async Task FlushAsync()
     {
-        if (!_options.EnableUsageTracking)
-            return;
-
         if (Interlocked.Exchange(ref _isFlushing, 1) == 1)
+        {
             return;
+        }
 
         try
         {
@@ -77,7 +84,7 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
             }
 
             var batch = _pending.Keys
-                .Take(Math.Max(1, _options.UsageReportBatchSize))
+                .Take(Math.Max(1, _options.UsageTracking.ReportBatchSize))
                 .ToList();
 
             if (batch.Count == 0)
