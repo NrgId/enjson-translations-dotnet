@@ -58,7 +58,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
     public Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken)
     {
-        return _enJsonHttpClient.GetLanguages(includeInactive, cancellationToken);
+        return _enJsonHttpClient.GetLanguagesAsync(includeInactive, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -137,7 +137,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         try
         {
-            var dict = await _enJsonHttpClient.GetTranslations<IReadOnlyDictionary<string, string>>(locale, @namespace, customGroup, false, cancellationToken);
+            var dict = await _enJsonHttpClient.GetTranslationsAsync<IReadOnlyDictionary<string, string>>(locale, @namespace, customGroup, false, cancellationToken);
             if (dict != null)
             {
                 _cache.Set(cacheKey, dict, _memoryCacheEntryOptions);
@@ -237,7 +237,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         }
     }
 
-    private async Task<(JsonObject? dict, bool cacheable)> GetNamespaceCore(
+    private async Task<(JsonObject? dict, bool cacheable)> GetNamespaceCoreAsync(
         string locale, 
         string @namespace, 
         string? customGroup,
@@ -248,7 +248,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         
         try
         {
-            var remoteDict = await _enJsonHttpClient.GetTranslations<JsonObject>(locale, @namespace, customGroup, true, cancellationToken);
+            var remoteDict = await _enJsonHttpClient.GetTranslationsAsync<JsonObject>(locale, @namespace, customGroup, true, cancellationToken);
             if (remoteDict == null)
             {
                 return (localDict, false);
@@ -288,7 +288,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             return cached;
         }
 
-        var (dict, cacheable) = await GetNamespaceCore(locale, @namespace, customGroup, cancellationToken);
+        var (dict, cacheable) = await GetNamespaceCoreAsync(locale, @namespace, customGroup, cancellationToken);
         if (dict == null)
         {
             return null;

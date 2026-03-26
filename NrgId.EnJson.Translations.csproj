@@ -6,6 +6,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>NrgId.EnJson.Translations</RootNamespace>
     <AssemblyName>NrgId.EnJson.Translations</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <PackageId>NrgId.EnJson.Translations</PackageId>
     <Version>1.1.0</Version>
@@ -33,5 +34,9 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
     <PackageReference Include="System.Net.Http.Json" Version="10.0.5" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

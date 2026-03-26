@@ -38,7 +38,7 @@ internal sealed class EnJsonHttpClient
 		}
 	}
 	
-	public async Task<List<EnJsonLanguage>?> GetLanguages(bool includeInactive, CancellationToken cancellationToken)
+	public async Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken)
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/languages";
 		var query = HttpUtility.ParseQueryString(string.Empty);
@@ -69,7 +69,7 @@ internal sealed class EnJsonHttpClient
 		return await response.Content.ReadFromJsonAsync<List<EnJsonLanguage>>(cancellationToken).ConfigureAwait(false);
 	}
 
-	public async Task<T?> GetTranslations<T>(
+	public async Task<T?> GetTranslationsAsync<T>(
 		string locale, 
 		string? @namespace, 
 		string? customGroup, 
@@ -107,7 +107,7 @@ internal sealed class EnJsonHttpClient
 		return await response.Content.ReadFromJsonAsync<T>(cancellationToken).ConfigureAwait(false);
 	}
 
-	public async Task<bool> PostLastUsed(List<string> translationKeys)
+	public async Task<bool> PostLastUsedAsync(List<string> translationKeys)
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/last-used";
 		var payload = new

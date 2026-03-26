@@ -85,7 +85,7 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
                 return;
             }
 
-            var ok = await _enJsonHttpClient.PostLastUsed(batch);
+            var ok = await _enJsonHttpClient.PostLastUsedAsync(batch);
             if (!ok)
             {
                 return;
