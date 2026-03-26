@@ -9,7 +9,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <PackageId>NrgId.EnJson.Translations</PackageId>
-    <Version>1.1.0</Version>
+    <Version>2.0.0</Version>
     <Authors>NrgId</Authors>
     <Company>NrgId</Company>
     <Description>Translation provider and DI extensions for loading translations from EnJson.com (NrgId platform).</Description>
