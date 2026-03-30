@@ -258,6 +258,11 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         );
     }
     
+    public Task PostLastUsedAsync(IEnumerable<string> translationKeys, string? customGroup)
+    { 
+        return _enJsonHttpClient.PostLastUsedAsync(translationKeys, customGroup);
+    }
+
     /// <summary>
     /// Not pure, returns modified older, newer gets used up and becomes invalid.
     /// </summary>
@@ -323,4 +328,5 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         return data;
     }
+    
 }

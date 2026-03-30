@@ -92,7 +92,10 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
                 return;
             }
 
-            var ok = await _enJsonHttpClient.PostLastUsedAsync(batch);
+            // todo:
+            // this should be able to send customGroup.
+            // this means that _pending should remember custom group of the key.
+            var ok = await _enJsonHttpClient.PostLastUsedAsync(batch, null);
             if (!ok)
             {
                 return;

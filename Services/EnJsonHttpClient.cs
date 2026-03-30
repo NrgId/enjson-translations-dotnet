@@ -104,15 +104,23 @@ internal sealed class EnJsonHttpClient
 		return await response.Content.ReadFromJsonAsync<T>(cancellationToken).ConfigureAwait(false);
 	}
 
-	public async Task<bool> PostLastUsedAsync(List<string> translationKeys)
+	public async Task<bool> PostLastUsedAsync(IEnumerable<string> translationKeys, string? customGroup)
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/last-used";
+		var query = HttpUtility.ParseQueryString(string.Empty);
+		if (!string.IsNullOrWhiteSpace(customGroup))
+		{
+			query["customGroup"] = customGroup;
+		}
+
+		var requestUri = $"{requestEndpoint}?{query}";
+		
 		var payload = new
 		{
 			translationKeys,
 		};
 		
-		var response = await _httpClient.PostAsJsonAsync(requestEndpoint, payload).ConfigureAwait(false);
+		var response = await _httpClient.PostAsJsonAsync(requestUri, payload).ConfigureAwait(false);
 		if (!response.IsSuccessStatusCode)
 		{
 			_enJsonErrorListener.OnError(ErrorSources.UsageTracker, ErrorMessages.EnJsonRequestFailed, null, response);
