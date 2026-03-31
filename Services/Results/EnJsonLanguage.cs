@@ -19,7 +19,7 @@ public record EnJsonLanguage
 	/// Internal id
 	/// </summary>
 	public required int Id { get; init; }
-	
+
 	/// <summary>
 	/// Only one language can be main
 	/// </summary>
@@ -32,7 +32,7 @@ public record EnJsonLanguage
 	///	"fr"
 	/// </example>
 	public required string Code { get; init; }
-	
+
 	/// <summary>
 	/// Code for compatability with Google Translate API's.
 	/// Optional.
@@ -41,7 +41,7 @@ public record EnJsonLanguage
 	///	"fr"
 	/// </example>
 	public string? GoogleCode { get; init; }
-	
+
 	/// <summary>
 	/// Internationally understandable language name. Generally, in English.
 	/// </summary>
@@ -49,7 +49,7 @@ public record EnJsonLanguage
 	///	"French"
 	/// </example>
 	public required string InternationalName { get; init; }
-	
+
 	/// <summary>
 	/// Name of the language in that language. Prefer these when showing UI language options.
 	/// </summary>
@@ -57,7 +57,7 @@ public record EnJsonLanguage
 	///	"Français"
 	/// </example>
 	public required string NativeName { get; init; }
-	
+
 	/// <summary>
 	/// Will always be true, unless fetching inactive languages with `includeInactive`
 	/// </summary>

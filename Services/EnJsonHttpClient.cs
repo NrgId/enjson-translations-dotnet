@@ -18,8 +18,12 @@ internal sealed class EnJsonHttpClient
 	private readonly HttpClient _httpClient;
 	private readonly IEnJsonErrorListener _enJsonErrorListener;
 	private readonly IOptions<EnJsonTranslationsOptions> _options;
-	
-	public EnJsonHttpClient(IHttpClientFactory httpClientFactory, IEnJsonErrorListener enJsonErrorListener, IOptions<EnJsonTranslationsOptions> options)
+
+	public EnJsonHttpClient(
+		IHttpClientFactory httpClientFactory,
+		IEnJsonErrorListener enJsonErrorListener,
+		IOptions<EnJsonTranslationsOptions> options
+	)
 	{
 		_options = options;
 		_enJsonErrorListener = enJsonErrorListener;
@@ -31,14 +35,17 @@ internal sealed class EnJsonHttpClient
 
 		var baseUri = opt.BaseUrl.TrimEnd('/');
 		_httpClient.BaseAddress = new Uri(baseUri);
-            
+
 		if (!string.IsNullOrEmpty(opt.ApiKey))
 		{
 			_httpClient.DefaultRequestHeaders.Add("apiKey", opt.ApiKey);
 		}
 	}
-	
-	public async Task<List<EnJsonLanguage>?> GetLanguagesAsync(bool includeInactive, CancellationToken cancellationToken)
+
+	public async Task<List<EnJsonLanguage>?> GetLanguagesAsync(
+		bool includeInactive,
+		CancellationToken cancellationToken
+	)
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/languages";
 		var query = HttpUtility.ParseQueryString(string.Empty);
@@ -58,23 +65,33 @@ internal sealed class EnJsonHttpClient
 		{
 			requestUri = requestEndpoint;
 		}
-		
-		var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+
+		var response = await _httpClient
+			.GetAsync(requestUri, cancellationToken)
+			.ConfigureAwait(false);
 		if (!response.IsSuccessStatusCode)
 		{
-			_enJsonErrorListener.OnError(ErrorSources.TranslationProvider, ErrorMessages.EnJsonRequestFailed, null, response);
+			_enJsonErrorListener.OnError(
+				ErrorSources.TranslationProvider,
+				ErrorMessages.EnJsonRequestFailed,
+				null,
+				response
+			);
 			return null;
 		}
-		
-		return await response.Content.ReadFromJsonAsync<List<EnJsonLanguage>>(cancellationToken).ConfigureAwait(false);
+
+		return await response
+			.Content.ReadFromJsonAsync<List<EnJsonLanguage>>(cancellationToken)
+			.ConfigureAwait(false);
 	}
 
 	public async Task<T?> GetTranslationsAsync<T>(
-		string locale, 
-		string? @namespace, 
-		string? customGroup, 
+		string locale,
+		string? @namespace,
+		string? customGroup,
 		CancellationToken cancellationToken
-	) where T : class
+	)
+		where T : class
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/translations";
 
@@ -93,18 +110,28 @@ internal sealed class EnJsonHttpClient
 		}
 
 		var requestUri = $"{requestEndpoint}?{query}";
-		
-		var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
+
+		var response = await _httpClient
+			.GetAsync(requestUri, cancellationToken)
+			.ConfigureAwait(false);
 		if (!response.IsSuccessStatusCode)
 		{
-			_enJsonErrorListener.OnError(ErrorSources.TranslationProvider, ErrorMessages.EnJsonRequestFailed, null, response);
+			_enJsonErrorListener.OnError(
+				ErrorSources.TranslationProvider,
+				ErrorMessages.EnJsonRequestFailed,
+				null,
+				response
+			);
 			return null;
 		}
-		
+
 		return await response.Content.ReadFromJsonAsync<T>(cancellationToken).ConfigureAwait(false);
 	}
 
-	public async Task<bool> PostLastUsedAsync(IEnumerable<string> translationKeys, string? customGroup)
+	public async Task<bool> PostLastUsedAsync(
+		IEnumerable<string> translationKeys,
+		string? customGroup
+	)
 	{
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/last-used";
 		var query = HttpUtility.ParseQueryString(string.Empty);
@@ -114,16 +141,18 @@ internal sealed class EnJsonHttpClient
 		}
 
 		var requestUri = $"{requestEndpoint}?{query}";
-		
-		var payload = new
-		{
-			translationKeys,
-		};
-		
+
+		var payload = new { translationKeys };
+
 		var response = await _httpClient.PostAsJsonAsync(requestUri, payload).ConfigureAwait(false);
 		if (!response.IsSuccessStatusCode)
 		{
-			_enJsonErrorListener.OnError(ErrorSources.UsageTracker, ErrorMessages.EnJsonRequestFailed, null, response);
+			_enJsonErrorListener.OnError(
+				ErrorSources.UsageTracker,
+				ErrorMessages.EnJsonRequestFailed,
+				null,
+				response
+			);
 			return false;
 		}
 

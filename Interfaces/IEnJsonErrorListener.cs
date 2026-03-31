@@ -16,5 +16,10 @@ public interface IEnJsonErrorListener
 	/// <param name="context">What actually happened, <see cref="ErrorMessages"/>, null if unknown</param>
 	/// <param name="exception">If error was produced as a result of an exception, will be set</param>
 	/// <param name="httpResponseMessage">If error was produced as a result of a network call, will be set</param>
-	void OnError(string source, string? context, Exception? exception, HttpResponseMessage? httpResponseMessage);
+	void OnError(
+		string source,
+		string? context,
+		Exception? exception,
+		HttpResponseMessage? httpResponseMessage
+	);
 }

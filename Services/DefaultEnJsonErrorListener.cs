@@ -9,11 +9,22 @@ namespace NrgId.EnJson.Translations.Services;
 public class DefaultEnJsonErrorListener(ILogger<IEnJsonErrorListener> logger) : IEnJsonErrorListener
 {
 	/// <inheritdoc />
-	public void OnError(string source, string? context, Exception? exception, HttpResponseMessage? httpResponseMessage)
+	public void OnError(
+		string source,
+		string? context,
+		Exception? exception,
+		HttpResponseMessage? httpResponseMessage
+	)
 	{
 		if (httpResponseMessage != null)
 		{
-			logger.LogError(exception, "Source={Source}, context={Context}, Request failed with status={Status}.", source, context, httpResponseMessage.StatusCode);
+			logger.LogError(
+				exception,
+				"Source={Source}, context={Context}, Request failed with status={Status}.",
+				source,
+				context,
+				httpResponseMessage.StatusCode
+			);
 		}
 		else
 		{

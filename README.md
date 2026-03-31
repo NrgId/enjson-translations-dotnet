@@ -64,8 +64,8 @@ public class MyService
         var value = await _provider.GetTranslationAsync("en", "emails.user_registered.subject");
         return value ?? "Title";
     }
-    
-    public Task<JsonObject?> GetEntireNamespaceAsync() 
+
+    public Task<JsonObject?> GetEntireNamespaceAsync()
     {
         return _provider.GetNamespace("en", "errorCodes");
     }
@@ -79,13 +79,24 @@ Override `IEnJsonErrorListener` service to handle errors.
 Default implementation just logs errors:
 
 ```csharp
-public class DefaultEnJsonErrorListener(Logger<IEnJsonErrorListener> logger) : IEnJsonErrorListener
+public class DefaultEnJsonErrorListener(ILogger<IEnJsonErrorListener> logger) : IEnJsonErrorListener
 {
-	public void OnError(string source, string? context, Exception? exception, HttpResponseMessage? httpResponseMessage)
+	public void OnError(
+		string source,
+		string? context,
+		Exception? exception,
+		HttpResponseMessage? httpResponseMessage
+	)
 	{
 		if (httpResponseMessage != null)
 		{
-			logger.LogError(exception, "Source={Source}, context={Context}, Request failed with status={Status}.", source, context, httpResponseMessage.StatusCode);
+			logger.LogError(
+				exception,
+				"Source={Source}, context={Context}, Request failed with status={Status}.",
+				source,
+				context,
+				httpResponseMessage.StatusCode
+			);
 		}
 		else
 		{
