@@ -13,5 +13,5 @@ public interface IEnJsonUsageTracker
 	/// usageTracker.Track("loginForm.email.placeholder");
 	/// </code>
 	/// </example>
-	void Track(string fullKey);
+	void Track(string key, string? customGroup);
 }

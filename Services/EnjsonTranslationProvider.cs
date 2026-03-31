@@ -107,7 +107,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 			return Task.FromResult<string?>(null);
 		}
 
-		_usageTracker.Track(key);
+		_usageTracker.Track(key, customGroup);
 
 		var cacheKey =
 			$"{CachePrefix}:{_options.Value.ProjectId}:translation:language:{language}:key:{key}:customGroup:{customGroup}";

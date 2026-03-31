@@ -15,7 +15,7 @@ public record EnJsonTranslationsOptions
 	/// <summary>
 	///     Base API URL for the EnJson service.
 	/// </summary>
-	public string BaseUrl { get; set; } = "https://api.EnJson.com";
+	public string BaseUrl { get; set; } = "https://api.enjson.com";
 
 	/// <summary>
 	///     EnJson Project ID.
