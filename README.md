@@ -14,24 +14,27 @@ Add configuration for the `EnJsonTranslations` section:
 
 ```json
 {
-  "EnJsonTranslations": {
-    "BaseUrl": "https://api.enjson.com",
-    "ProjectId": "YOUR_PROJECT_ID",
-    "ApiKey": "YOUR_API_KEY",
-    "CacheMinutes": 5,
-    "HttpTimeoutSeconds": 20,
-    "DefaultLocale": "en",
-    "Nested": true,
-    "LocalFallbackPath": {
-        "en": "Resources/en.json",
-        "fr": "Resources/fr.json"
-    },
-    "UsageTracking": {
-        "Enabled": false,
-        "ReportIntervalMinutes": 5,
-        "ReportBatchSize": 200
-    }
-  }
+	"EnJsonTranslations": {
+		"BaseUrl": "https://api.enjson.com",
+		"ProjectId": "YOUR_PROJECT_ID",
+		"ApiKey": "YOUR_API_KEY",
+		"CacheMinutes": 5,
+		"HttpTimeoutSeconds": 20,
+		"Nested": true,
+		"Fallback": {
+			"Language": "en",
+			"AlwaysMerge": false,
+			"LocalPaths": {
+				"en": "Resources/en.json",
+				"fr": "Resources/fr.json"
+			}
+		},
+		"UsageTracking": {
+			"Enabled": true,
+			"ReportIntervalMinutes": 5,
+			"ReportBatchSize": 200
+		}
+	}
 }
 ```
 

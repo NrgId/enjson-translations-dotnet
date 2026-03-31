@@ -97,7 +97,7 @@ internal sealed class EnJsonHttpClient
 
 		var query = HttpUtility.ParseQueryString(string.Empty);
 		query["language"] = locale;
-		query["fallbackLanguage"] = _options.Value.FallBackLanguage;
+		query["fallbackLanguage"] = _options.Value.Fallback.Language;
 		query["nested"] = _options.Value.Nested.ToString();
 
 		if (!string.IsNullOrWhiteSpace(@namespace))

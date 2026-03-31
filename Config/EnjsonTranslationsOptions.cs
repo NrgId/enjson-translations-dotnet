@@ -38,32 +38,50 @@ public record EnJsonTranslationsOptions
 	public int HttpTimeoutSeconds { get; set; } = 20;
 
 	/// <summary>
-	///     Default locale used when none is provided.
-	/// </summary>
-	public string FallBackLanguage { get; set; } = "en";
-
-	/// <summary>
 	///     If true, sets it for network requests, and expects nested fallback files
 	/// </summary>
 	public bool Nested { get; set; } = true;
 
 	/// <summary>
-	/// <para>
-	/// Local fallback file paths (e.g. Resources/en.json). Optional.
-	/// </para>
-	/// <para>
-	/// Keys are languages, values are paths to .json files.
-	/// </para>
-	/// <example>
-	/// <code>
-	/// "LocalFallbackPaths": {
-	///   "en": "Resources/en.json",
-	///   "fr": "Resources/fr.json"
-	/// },
-	/// </code>
-	/// </example>
+	/// Fallback configuration.
 	/// </summary>
-	public Dictionary<string, string> LocalFallbackPaths { get; set; } = [];
+	public FallbackSection Fallback { get; set; } = new();
+
+	/// <summary>
+	/// Fallback configuration options.
+	/// </summary>
+	public record FallbackSection
+	{
+		/// <summary>
+		/// Default locale used if translations not found in provided language.
+		/// </summary>
+		public string Language { get; set; } = "en";
+
+		/// <summary>
+		/// <para>
+		/// If not set, local files would only be accessed if enjson API is not available.
+		/// </para>
+		/// <para>
+		///	If set, enjson API response will be merged with this language's local file, and then with fallback language's local file.
+		/// </para>
+		/// </summary>
+		public bool AlwaysMerge { get; set; } = false;
+
+		/// <summary>
+		/// <para>
+		/// Local fallback file paths (e.g. Resources/en.json). Keys are languages, values are paths to .json files. Optional.
+		/// </para>
+		/// </summary>
+		/// <example>
+		/// <code>
+		/// "LocalFallbackPaths": {
+		///   "en": "Resources/en.json",
+		///   "fr": "Resources/fr.json"
+		/// },
+		/// </code>
+		/// </example>
+		public Dictionary<string, string> LocalPaths { get; set; } = [];
+	}
 
 	/// <summary>
 	/// Usage tracking configuration.

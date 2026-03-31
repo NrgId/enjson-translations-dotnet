@@ -21,7 +21,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 {
 	private readonly IMemoryCache _cache;
 	private readonly EnJsonHttpClient _enJsonHttpClient;
-	private readonly EnJsonTranslationsOptions _options;
+	private readonly IOptions<EnJsonTranslationsOptions> _options;
 	private readonly IEnJsonUsageTracker _usageTracker;
 	private readonly IEnJsonErrorListener _errorListener;
 
@@ -41,26 +41,32 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 	{
 		_enJsonHttpClient = enJsonHttpClient;
 		_cache = cache;
-		_options = options.Value;
+		_options = options;
 		_usageTracker = usageTracker;
 		_errorListener = errorListener;
 		_memoryCacheEntryOptions = new MemoryCacheEntryOptions
 		{
-			AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.CacheMinutes),
+			AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.Value.CacheMinutes),
 		};
 
-		if (string.IsNullOrWhiteSpace(_options.ProjectId))
+		if (string.IsNullOrWhiteSpace(_options.Value.ProjectId))
+		{
 			throw new ArgumentException(
 				ErrorMessages.EnJsonMissingProjectId,
-				nameof(_options.ProjectId)
+				nameof(_options.Value.ProjectId)
 			);
+		}
 
-		foreach (var fallbackPath in _options.LocalFallbackPaths)
+		foreach (var fallbackPath in _options.Value.Fallback.LocalPaths)
+		{
 			if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
+			{
 				throw new ArgumentException(
 					ErrorMessages.EnJsonFallbackNotFound,
-					nameof(_options.LocalFallbackPaths)
+					nameof(_options.Value.Fallback.LocalPaths)
 				);
+			}
+		}
 	}
 
 	public Task<List<EnJsonLanguage>?> GetLanguagesAsync(
@@ -68,7 +74,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		CancellationToken cancellationToken
 	)
 	{
-		var cacheKey = $"{CachePrefix}:{_options.ProjectId}:languages:{includeInactive}";
+		var cacheKey = $"{CachePrefix}:{_options.Value.ProjectId}:languages:{includeInactive}";
 
 		return GetTroughCacheAsync(
 			cacheKey,
@@ -104,7 +110,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		_usageTracker.Track(key);
 
 		var cacheKey =
-			$"{CachePrefix}:{_options.ProjectId}:translation:locale:{locale}:key:{key}:customGroup:{customGroup}";
+			$"{CachePrefix}:{_options.Value.ProjectId}:translation:locale:{locale}:key:{key}:customGroup:{customGroup}";
 		return GetTroughCacheAsync(
 			cacheKey,
 			async () =>
@@ -127,7 +133,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		CancellationToken cancellationToken
 	)
 	{
-		if (_options.Nested)
+		if (_options.Value.Nested)
 		{
 			var keyParts = key.Split('.');
 			string? @namespace = null;
@@ -191,7 +197,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
 	private JsonObject? ReadFallbackFile(string locale)
 	{
-		_options.LocalFallbackPaths.TryGetValue(locale, out var localFallbackPath);
+		_options.Value.Fallback.LocalPaths.TryGetValue(locale, out var localFallbackPath);
 		if (string.IsNullOrWhiteSpace(localFallbackPath))
 		{
 			return null;
@@ -215,7 +221,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 	}
 
-	private JsonObject? GetFallbackNamespace(string locale, string? @namespace)
+	private JsonObject? GetFallbackSourceFromFile(string locale, string? @namespace)
 	{
 		try
 		{
@@ -245,29 +251,56 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 	}
 
-	private async Task<(JsonObject? dict, bool cacheable)> GetNamespaceCoreAsync(
+	private (JsonObject? defaultLocaleSource, JsonObject? requestedLocaleSource) GetFallbackSources(
+		string locale,
+		string? @namespace
+	)
+	{
+		var localeDict = GetFallbackSourceFromFile(locale, @namespace);
+		if (locale != _options.Value.Fallback.Language)
+		{
+			var defaultDict = GetFallbackSourceFromFile(
+				_options.Value.Fallback.Language,
+				@namespace
+			);
+			return (defaultDict, localeDict);
+		}
+
+		return (null, localeDict);
+	}
+
+	private async Task<(JsonObject? dict, bool cacheable)> GetTranslationsCoreAsync(
 		string locale,
 		string? @namespace,
 		string? customGroup,
 		CancellationToken cancellationToken
 	)
 	{
-		var localDict = GetFallbackNamespace(locale, @namespace);
-
 		try
 		{
-			var remoteDict = await _enJsonHttpClient.GetTranslationsAsync<JsonObject>(
+			var remoteSource = await _enJsonHttpClient.GetTranslationsAsync<JsonObject>(
 				locale,
 				@namespace,
 				customGroup,
 				cancellationToken
 			);
-			if (remoteDict == null)
+
+			var cacheable = remoteSource != null;
+
+			if (_options.Value.Fallback.AlwaysMerge || remoteSource == null)
 			{
-				return (localDict, false);
+				var (defaultLocaleSource, requestedLocaleSource) = GetFallbackSources(
+					locale,
+					@namespace
+				);
+
+				return (
+					DeepMerge(defaultLocaleSource, requestedLocaleSource, remoteSource),
+					cacheable
+				);
 			}
 
-			return (DeepMerge(localDict, remoteDict), true);
+			return (remoteSource, cacheable);
 		}
 		catch (Exception e)
 		{
@@ -293,7 +326,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 			$"{CachePrefix}:locale:{locale}:namespace:{@namespace}:customGroup:{customGroup}";
 		return GetTroughCacheAsync(
 			cacheKey,
-			() => GetNamespaceCoreAsync(locale, @namespace, customGroup, cancellationToken)
+			() => GetTranslationsCoreAsync(locale, @namespace, customGroup, cancellationToken)
 		);
 	}
 
@@ -303,47 +336,65 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 	}
 
 	/// <summary>
-	/// Not pure, returns modified older, newer gets used up and becomes invalid.
+	/// Not pure, all sources should be considered unusable.
 	/// </summary>
-	private static JsonObject? DeepMerge(JsonObject? older, JsonObject? newer)
+	/// <param name="sources">List of sources, older to newer.</param>
+	private static JsonObject? DeepMerge(params IEnumerable<JsonObject?> sources)
 	{
-		if (older is null)
+		var notNullSources = sources.Where(s => s != null).Select(s => s!).ToList();
+		var target = notNullSources.LastOrDefault();
+		if (target == null)
 		{
-			return newer;
-		}
-		if (newer is null)
-		{
-			return older;
+			return null;
 		}
 
-		// to list needed to detach from newer
-		foreach (var kv in newer.ToList())
+		var keys = notNullSources
+			.SelectMany(s => ((IDictionary<string, JsonNode?>)s).Keys)
+			.Distinct()
+			.ToList(); // to list required to mutate in loop (via source.Remove)
+
+		foreach (var key in keys)
 		{
-			if (!older.ContainsKey(kv.Key))
-			{
-				// not found, just move
-				newer.Remove(kv.Key); // must be detached from newer first
-				older[kv.Key] = kv.Value;
-				continue;
-			}
+			var foundInTarget = target.TryGetPropertyValue(key, out var targetNode);
 
-			// merge them
-
-			var oldValue = older[kv.Key];
-			var newValue = kv.Value;
-
-			if (oldValue is JsonObject oldObj && newValue is JsonObject newObj)
+			// Merge the rest into the target
+			foreach (var source in notNullSources)
 			{
-				older[kv.Key] = DeepMerge(oldObj, newObj);
-			}
-			else
-			{
-				newer.Remove(kv.Key);
-				older[kv.Key] = newValue;
+				if (source == target)
+				{
+					// skip target itself
+					continue;
+				}
+
+				var foundInSource = source.TryGetPropertyValue(key, out var sourceNode);
+				if (!foundInSource)
+				{
+					continue;
+				}
+
+				if (!foundInTarget)
+				{
+					// not in target, just put it in
+					source.Remove(key);
+					target[key] = sourceNode;
+
+					// and now it's in target!
+					targetNode = sourceNode;
+					foundInTarget = true;
+					continue;
+				}
+
+				if (targetNode is JsonObject targetObject && sourceNode is JsonObject sourceObject)
+				{
+					// both are objects, merge
+					DeepMerge(sourceObject, targetObject);
+				}
+
+				// types differ, keep newer.
 			}
 		}
 
-		return older;
+		return target;
 	}
 
 	private async Task<T?> GetTroughCacheAsync<T>(
