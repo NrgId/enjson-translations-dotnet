@@ -73,7 +73,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
     }
 
     /// <inheritdoc />
-    public Task<string?> GetTranslationAsync(string locale, string key, string? customGroup = null, CancellationToken ct = default)
+    public Task<string?> GetTranslationAsync(string locale, string key, string? customGroup = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(locale))
         {
@@ -92,13 +92,13 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             cacheKey,
             async () =>
             {
-                var value = await GetTranslationCoreAsync(locale, key, customGroup, ct);
+                var value = await GetTranslationCoreAsync(locale, key, customGroup, cancellationToken);
                 return (value, value != null);
             }
         );
     }
 
-    private async Task<string?> GetTranslationCoreAsync(string locale, string key, string? customGroup = null, CancellationToken ct = default)
+    private async Task<string?> GetTranslationCoreAsync(string locale, string key, string? customGroup, CancellationToken cancellationToken)
     {
         if (_options.Nested)
         {        
@@ -109,7 +109,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
                 @namespace = keyParts[0];
             }
         
-            var dict = await GetNamespaceAsync(locale, @namespace, customGroup, ct);
+            var dict = await GetTranslationsAsync(locale, @namespace, customGroup, cancellationToken);
             if (dict == null)
             {
                 return null;
@@ -119,7 +119,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         }
         else
         {
-            var dict = await GetNamespaceAsync(locale, null, customGroup, ct);
+            var dict = await GetTranslationsAsync(locale, null, customGroup, cancellationToken);
             if (dict == null)
             {
                 return null;
@@ -157,7 +157,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
         return currentNode?.ToString();
     }
     
-    private string? ReadFallbackFile(string locale)
+    private JsonObject? ReadFallbackFile(string locale)
     {
         _options.LocalFallbackPaths.TryGetValue(locale, out var localFallbackPath);
         if (string.IsNullOrWhiteSpace(localFallbackPath))
@@ -167,7 +167,9 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
         try
         {
-            return File.ReadAllText(localFallbackPath);
+            var text = File.ReadAllText(localFallbackPath);
+            var jsonNode = JsonNode.Parse(text);
+            return jsonNode?.AsObject();
         }
         catch (Exception e)
         {
@@ -175,18 +177,12 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             return null;
         }
     }
-    
+
     private JsonObject? GetFallbackNamespace(string locale, string? @namespace)
     {
         try
         {
-            var text = ReadFallbackFile(locale);
-            if (text == null)
-            {
-                return null;
-            }
-            var jsonNode = JsonNode.Parse(text);
-            var jsonObject = jsonNode?.AsObject();
+            var jsonObject = ReadFallbackFile(locale);
             if (jsonObject == null)
             {
                 return null;
@@ -239,7 +235,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
     }
 
     /// <inheritdoc />
-    public Task<JsonObject?> GetNamespaceAsync(
+    public Task<JsonObject?> GetTranslationsAsync(
         string locale,
         string? @namespace,
         string? customGroup,
@@ -257,7 +253,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
             () => GetNamespaceCoreAsync(locale, @namespace, customGroup, cancellationToken)
         );
     }
-    
+
     public Task PostLastUsedAsync(IEnumerable<string> translationKeys, string? customGroup)
     { 
         return _enJsonHttpClient.PostLastUsedAsync(translationKeys, customGroup);
