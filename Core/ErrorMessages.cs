@@ -18,22 +18,12 @@ public static class ErrorMessages
 	/// <summary>
 	///     Localization not provided
 	/// </summary>
-	public const string EnJsonMissingLocale = "EnJson_missing_locale";
+	public const string EnJsonMissingLanguage = "EnJson_missing_language";
 
 	/// <summary>
 	///     ProjectId not provided
 	/// </summary>
 	public const string EnJsonMissingProjectId = "EnJson_missing_project_id";
-
-	/// <summary>
-	///     Namespace not provided
-	/// </summary>
-	public const string EnJsonKeyMissingNamespace = "EnJson_key_missing_namespace";
-
-	/// <summary>
-	///     Namespace mismatch with cached
-	/// </summary>
-	public const string EnJsonNamespaceMismatch = "EnJson_namespace_mismatch";
 
 	/// <summary>
 	///     Request failed

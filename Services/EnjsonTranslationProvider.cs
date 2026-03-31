@@ -91,15 +91,15 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
 	/// <inheritdoc />
 	public Task<string?> GetTranslationAsync(
-		string locale,
+		string language,
 		string key,
 		string? customGroup = null,
 		CancellationToken cancellationToken = default
 	)
 	{
-		if (string.IsNullOrWhiteSpace(locale))
+		if (string.IsNullOrWhiteSpace(language))
 		{
-			throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
+			throw new ArgumentException(ErrorMessages.EnJsonMissingLanguage, nameof(language));
 		}
 
 		if (string.IsNullOrWhiteSpace(key))
@@ -110,13 +110,13 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		_usageTracker.Track(key);
 
 		var cacheKey =
-			$"{CachePrefix}:{_options.Value.ProjectId}:translation:locale:{locale}:key:{key}:customGroup:{customGroup}";
+			$"{CachePrefix}:{_options.Value.ProjectId}:translation:language:{language}:key:{key}:customGroup:{customGroup}";
 		return GetTroughCacheAsync(
 			cacheKey,
 			async () =>
 			{
 				var value = await GetTranslationCoreAsync(
-					locale,
+					language,
 					key,
 					customGroup,
 					cancellationToken
@@ -127,7 +127,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 	}
 
 	private async Task<string?> GetTranslationCoreAsync(
-		string locale,
+		string language,
 		string key,
 		string? customGroup,
 		CancellationToken cancellationToken
@@ -143,7 +143,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 			}
 
 			var dict = await GetTranslationsAsync(
-				locale,
+				language,
 				@namespace,
 				customGroup,
 				cancellationToken
@@ -157,7 +157,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 		else
 		{
-			var dict = await GetTranslationsAsync(locale, null, customGroup, cancellationToken);
+			var dict = await GetTranslationsAsync(language, null, customGroup, cancellationToken);
 			if (dict == null)
 			{
 				return null;
@@ -195,9 +195,9 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		return currentNode?.ToString();
 	}
 
-	private JsonObject? ReadFallbackFile(string locale)
+	private JsonObject? ReadFallbackFile(string language)
 	{
-		_options.Value.Fallback.LocalPaths.TryGetValue(locale, out var localFallbackPath);
+		_options.Value.Fallback.LocalPaths.TryGetValue(language, out var localFallbackPath);
 		if (string.IsNullOrWhiteSpace(localFallbackPath))
 		{
 			return null;
@@ -221,11 +221,11 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 	}
 
-	private JsonObject? GetFallbackSourceFromFile(string locale, string? @namespace)
+	private JsonObject? GetFallbackSourceFromFile(string language, string? @namespace)
 	{
 		try
 		{
-			var jsonObject = ReadFallbackFile(locale);
+			var jsonObject = ReadFallbackFile(language);
 			if (jsonObject == null)
 			{
 				return null;
@@ -251,26 +251,26 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 	}
 
-	private (JsonObject? defaultLocaleSource, JsonObject? requestedLocaleSource) GetFallbackSources(
-		string locale,
-		string? @namespace
-	)
+	private (
+		JsonObject? defaultLanguageSource,
+		JsonObject? requestedLanguageSource
+	) GetFallbackSources(string language, string? @namespace)
 	{
-		var localeDict = GetFallbackSourceFromFile(locale, @namespace);
-		if (locale != _options.Value.Fallback.Language)
+		var requestedLanguageSource = GetFallbackSourceFromFile(language, @namespace);
+		if (language != _options.Value.Fallback.Language)
 		{
-			var defaultDict = GetFallbackSourceFromFile(
+			var defaultLanguageSource = GetFallbackSourceFromFile(
 				_options.Value.Fallback.Language,
 				@namespace
 			);
-			return (defaultDict, localeDict);
+			return (defaultLanguageSource, requestedLanguageSource);
 		}
 
-		return (null, localeDict);
+		return (null, requestedLanguageSource);
 	}
 
 	private async Task<(JsonObject? dict, bool cacheable)> GetTranslationsCoreAsync(
-		string locale,
+		string language,
 		string? @namespace,
 		string? customGroup,
 		CancellationToken cancellationToken
@@ -279,7 +279,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		try
 		{
 			var remoteSource = await _enJsonHttpClient.GetTranslationsAsync<JsonObject>(
-				locale,
+				language,
 				@namespace,
 				customGroup,
 				cancellationToken
@@ -289,13 +289,13 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
 			if (_options.Value.Fallback.AlwaysMerge || remoteSource == null)
 			{
-				var (defaultLocaleSource, requestedLocaleSource) = GetFallbackSources(
-					locale,
+				var (defaultLanguageSource, requestedLanguageSource) = GetFallbackSources(
+					language,
 					@namespace
 				);
 
 				return (
-					DeepMerge(defaultLocaleSource, requestedLocaleSource, remoteSource),
+					DeepMerge(defaultLanguageSource, requestedLanguageSource, remoteSource),
 					cacheable
 				);
 			}
@@ -311,22 +311,22 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 
 	/// <inheritdoc />
 	public Task<JsonObject?> GetTranslationsAsync(
-		string locale,
+		string language,
 		string? @namespace,
 		string? customGroup,
 		CancellationToken cancellationToken
 	)
 	{
-		if (string.IsNullOrWhiteSpace(locale))
+		if (string.IsNullOrWhiteSpace(language))
 		{
-			throw new ArgumentException(ErrorMessages.EnJsonMissingLocale, nameof(locale));
+			throw new ArgumentException(ErrorMessages.EnJsonMissingLanguage, nameof(language));
 		}
 
 		var cacheKey =
-			$"{CachePrefix}:locale:{locale}:namespace:{@namespace}:customGroup:{customGroup}";
+			$"{CachePrefix}:language:{language}:namespace:{@namespace}:customGroup:{customGroup}";
 		return GetTroughCacheAsync(
 			cacheKey,
-			() => GetTranslationsCoreAsync(locale, @namespace, customGroup, cancellationToken)
+			() => GetTranslationsCoreAsync(language, @namespace, customGroup, cancellationToken)
 		);
 	}
 

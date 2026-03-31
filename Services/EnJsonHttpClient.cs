@@ -86,7 +86,7 @@ internal sealed class EnJsonHttpClient
 	}
 
 	public async Task<T?> GetTranslationsAsync<T>(
-		string locale,
+		string language,
 		string? @namespace,
 		string? customGroup,
 		CancellationToken cancellationToken
@@ -96,7 +96,7 @@ internal sealed class EnJsonHttpClient
 		var requestEndpoint = $"/integration/{_options.Value.ProjectId}/translations";
 
 		var query = HttpUtility.ParseQueryString(string.Empty);
-		query["language"] = locale;
+		query["language"] = language;
 		query["fallbackLanguage"] = _options.Value.Fallback.Language;
 		query["nested"] = _options.Value.Nested.ToString();
 

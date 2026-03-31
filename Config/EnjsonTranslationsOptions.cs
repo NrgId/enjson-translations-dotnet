@@ -53,7 +53,7 @@ public record EnJsonTranslationsOptions
 	public record FallbackSection
 	{
 		/// <summary>
-		/// Default locale used if translations not found in provided language.
+		/// Default language used if translations not found in provided language.
 		/// </summary>
 		public string Language { get; set; } = "en";
 

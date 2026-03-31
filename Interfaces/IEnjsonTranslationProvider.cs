@@ -23,11 +23,11 @@ public interface IEnJsonTranslationProvider
 	);
 
 	/// <summary>
-	/// Gets a translation for the specified locale and key.
+	/// Gets a translation for the specified language and key.
 	/// If translation is not found in the remote copy, looks for a match in fallback file.
 	/// Reports last used.
 	/// </summary>
-	/// <param name="locale">What locale to fetch translation for</param>
+	/// <param name="language">What language to fetch translation for</param>
 	/// <param name="key"> Key to translate</param>
 	/// <param name="customGroup">If provided, will fetch translations with this customGroup</param>
 	/// <param name="cancellationToken">Cancellation token</param>
@@ -38,23 +38,23 @@ public interface IEnJsonTranslationProvider
 	/// </example>
 	/// <returns>If found, string - the translation. If not found - <c>null</c>.</returns>
 	Task<string?> GetTranslationAsync(
-		string locale,
+		string language,
 		string key,
 		string? customGroup = null,
 		CancellationToken cancellationToken = default
 	);
 
 	/// <summary>
-	/// Gets all translations for this locale.
+	/// Gets all translations for this language.
 	/// Doesn't report last used.
 	/// </summary>
-	/// <param name="locale">What locale to fetch translations for</param>
+	/// <param name="language">What language to fetch translations for</param>
 	/// <param name="namespace">If provided, will fetch only this section of the translations. Only top-level namespaces supported as of now.</param>
 	/// <param name="customGroup">If provided, will fetch translations with this customGroup</param>
 	/// <param name="cancellationToken">Cancellation token</param>
 	/// <returns><c>null</c> if API is unavailable/misconfigured AND fallback file(s) were not found</returns>
 	Task<JsonObject?> GetTranslationsAsync(
-		string locale,
+		string language,
 		string? @namespace,
 		string? customGroup = null,
 		CancellationToken cancellationToken = default
