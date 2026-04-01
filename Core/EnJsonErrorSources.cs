@@ -3,7 +3,7 @@
 /// <summary>
 ///     Error sources
 /// </summary>
-public static class ErrorSources
+public static class EnJsonErrorSources
 {
 	/// <summary>
 	///     Usage tracker source

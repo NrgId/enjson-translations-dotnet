@@ -72,8 +72,8 @@ internal sealed class EnJsonHttpClient
 		if (!response.IsSuccessStatusCode)
 		{
 			_enJsonErrorListener.OnError(
-				ErrorSources.TranslationProvider,
-				ErrorMessages.EnJsonRequestFailed,
+				EnJsonErrorSources.TranslationProvider,
+				EnJsonErrorMessages.RequestFailed,
 				null,
 				response
 			);
@@ -117,8 +117,8 @@ internal sealed class EnJsonHttpClient
 		if (!response.IsSuccessStatusCode)
 		{
 			_enJsonErrorListener.OnError(
-				ErrorSources.TranslationProvider,
-				ErrorMessages.EnJsonRequestFailed,
+				EnJsonErrorSources.TranslationProvider,
+				EnJsonErrorMessages.RequestFailed,
 				null,
 				response
 			);
@@ -148,8 +148,8 @@ internal sealed class EnJsonHttpClient
 		if (!response.IsSuccessStatusCode)
 		{
 			_enJsonErrorListener.OnError(
-				ErrorSources.UsageTracker,
-				ErrorMessages.EnJsonRequestFailed,
+				EnJsonErrorSources.UsageTracker,
+				EnJsonErrorMessages.RequestFailed,
 				null,
 				response
 			);

@@ -12,8 +12,8 @@ public interface IEnJsonErrorListener
 	/// <summary>
 	/// Will be called with error context
 	/// </summary>
-	/// <param name="source">Where error comes from, <see cref="ErrorSources"/></param>
-	/// <param name="context">What actually happened, <see cref="ErrorMessages"/>, null if unknown</param>
+	/// <param name="source">Where error comes from, <see cref="EnJsonErrorSources"/></param>
+	/// <param name="context">What actually happened, <see cref="EnJsonErrorMessages"/>, null if unknown</param>
 	/// <param name="exception">If error was produced as a result of an exception, will be set</param>
 	/// <param name="httpResponseMessage">If error was produced as a result of a network call, will be set</param>
 	void OnError(

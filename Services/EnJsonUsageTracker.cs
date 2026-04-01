@@ -60,7 +60,7 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 			}
 			catch (Exception ex)
 			{
-				_errorListener.OnError(ErrorSources.UsageTracker, null, ex, null);
+				_errorListener.OnError(EnJsonErrorSources.UsageTracker, null, ex, null);
 			}
 
 			try

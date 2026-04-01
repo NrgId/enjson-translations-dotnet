@@ -52,7 +52,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		if (string.IsNullOrWhiteSpace(_options.Value.ProjectId))
 		{
 			throw new ArgumentException(
-				ErrorMessages.EnJsonMissingProjectId,
+				EnJsonErrorMessages.MissingProjectId,
 				nameof(_options.Value.ProjectId)
 			);
 		}
@@ -62,7 +62,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 			if (!string.IsNullOrWhiteSpace(fallbackPath.Value) && !File.Exists(fallbackPath.Value))
 			{
 				throw new ArgumentException(
-					ErrorMessages.EnJsonFallbackNotFound,
+					EnJsonErrorMessages.FallbackNotFound,
 					nameof(_options.Value.Fallback.LocalPaths)
 				);
 			}
@@ -99,7 +99,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 	{
 		if (string.IsNullOrWhiteSpace(language))
 		{
-			throw new ArgumentException(ErrorMessages.EnJsonMissingLanguage, nameof(language));
+			throw new ArgumentException(EnJsonErrorMessages.MissingLanguage, nameof(language));
 		}
 
 		if (string.IsNullOrWhiteSpace(key))
@@ -212,8 +212,8 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		catch (Exception e)
 		{
 			_errorListener.OnError(
-				ErrorSources.TranslationFallBackProvider,
-				ErrorMessages.EnJsonFallbackReadFailed,
+				EnJsonErrorSources.TranslationFallBackProvider,
+				EnJsonErrorMessages.FallbackReadFailed,
 				e,
 				null
 			);
@@ -246,7 +246,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 		catch (Exception e)
 		{
-			_errorListener.OnError(ErrorSources.TranslationFallBackProvider, null, e, null);
+			_errorListener.OnError(EnJsonErrorSources.TranslationFallBackProvider, null, e, null);
 			return null;
 		}
 	}
@@ -304,7 +304,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 		}
 		catch (Exception e)
 		{
-			_errorListener.OnError(ErrorSources.TranslationProvider, null, e, null);
+			_errorListener.OnError(EnJsonErrorSources.TranslationProvider, null, e, null);
 			return (null, false);
 		}
 	}
@@ -319,7 +319,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 	{
 		if (string.IsNullOrWhiteSpace(language))
 		{
-			throw new ArgumentException(ErrorMessages.EnJsonMissingLanguage, nameof(language));
+			throw new ArgumentException(EnJsonErrorMessages.MissingLanguage, nameof(language));
 		}
 
 		var cacheKey =
