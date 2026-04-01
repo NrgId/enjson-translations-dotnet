@@ -15,9 +15,9 @@ using NrgId.EnJson.Translations.Services.Results;
 namespace NrgId.EnJson.Translations.Services;
 
 /// <summary>
-///     EnJson implementation of <see cref="IEnJsonTranslationProvider" />.
+///     EnJson implementation of <see cref="IEnJsonProvider" />.
 /// </summary>
-internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
+internal class EnJsonProvider : IEnJsonProvider
 {
 	private readonly IMemoryCache _cache;
 	private readonly EnJsonHttpClient _enJsonHttpClient;
@@ -31,7 +31,7 @@ internal class EnJsonTranslationProvider : IEnJsonTranslationProvider
 	/// <summary>
 	///     Creates a new translation provider.
 	/// </summary>
-	public EnJsonTranslationProvider(
+	public EnJsonProvider(
 		IMemoryCache cache,
 		IOptions<EnJsonTranslationsOptions> options,
 		IEnJsonUsageTracker usageTracker,

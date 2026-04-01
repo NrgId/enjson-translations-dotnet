@@ -7,9 +7,9 @@ using NrgId.EnJson.Translations.Services.Results;
 namespace NrgId.EnJson.Translations.Interfaces;
 
 /// <summary>
-/// Provides translations from enjson.com.
+/// Provides API functionality from enjson.com.
 /// </summary>
-public interface IEnJsonTranslationProvider
+public interface IEnJsonProvider
 {
 	/// <summary>
 	/// Gets a list of <see cref="EnJsonLanguage"/>s added to the project

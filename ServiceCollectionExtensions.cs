@@ -67,6 +67,6 @@ public static class ServiceCollectionExtensions
 		services.AddSingleton<EnJsonHttpClient>();
 		services.AddSingleton<IEnJsonErrorListener, DefaultEnJsonErrorListener>();
 		services.AddSingleton<IEnJsonUsageTracker, EnJsonUsageTracker>();
-		services.AddSingleton<IEnJsonTranslationProvider, EnJsonTranslationProvider>();
+		services.AddSingleton<IEnJsonProvider, EnJsonProvider>();
 	}
 }
