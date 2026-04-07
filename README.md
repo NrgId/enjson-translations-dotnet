@@ -1,6 +1,19 @@
 # NrgId.EnJson.Translations
 
-A .NET translation provider and DI extensions for loading translations from EnJson.com as part of the NrgId platform.
+Official .NET translation provider for [EnJson.com](https://enjson.com), part of the NrgId platform.
+
+[EnJson.com](https://enjson.com) is a developer-friendly translation management service built for modern application teams. It works especially well in code-centric and AI-assisted workflows, where translations need to stay easy to inspect, edit, and generate alongside source code.
+
+EnJson offers a free plan suitable for many small and medium-sized projects.
+
+Create a free account: [Register on EnJson.com](https://nrgid.com/register?redirectUri=https:%2F%2Fenjson.com%2Fredirect&appId=1&pricingPlanId=4)
+
+Why use EnJson?
+
+- Developer-friendly JSON translation workflow
+- Easy integration with .NET applications through this package
+- Suitable for teams using AI coding tools such as Codex and Claude
+- Free plan suitable for many projects
 
 ## Installation
 
