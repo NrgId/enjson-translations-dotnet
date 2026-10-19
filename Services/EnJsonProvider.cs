@@ -348,6 +348,9 @@ internal class EnJsonProvider : IEnJsonProvider
 			return null;
 		}
 
+		// Fill missing keys from newer sources before considering older fallbacks.
+		notNullSources.Reverse();
+
 		var keys = notNullSources
 			.SelectMany(s => ((IDictionary<string, JsonNode?>)s).Keys)
 			.Distinct()
