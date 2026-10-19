@@ -10,7 +10,7 @@ using NrgId.EnJson.Translations.Interfaces;
 
 namespace NrgId.EnJson.Translations.Services;
 
-internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
+internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IAsyncDisposable
 {
 	private readonly EnJsonHttpClient _enJsonHttpClient;
 	private readonly IOptions<EnJsonTranslationsOptions> _options;
@@ -104,23 +104,24 @@ internal sealed class EnJsonUsageTracker : IEnJsonUsageTracker, IDisposable
 		}
 	}
 
-	public void Dispose()
+	public async ValueTask DisposeAsync()
 	{
-		if (_cancellationTokenSource != null)
+		try
 		{
-			_cancellationTokenSource.Cancel();
-			try
+			if (_cancellationTokenSource is { IsCancellationRequested: false })
 			{
-				_backgroundTask?.Wait();
+				_cancellationTokenSource.Cancel();
 			}
-			catch
+			if (_backgroundTask != null)
 			{
-				/* ignored */
+				await _backgroundTask.ConfigureAwait(false);
 			}
-			_cancellationTokenSource.Dispose();
 		}
-
-		_pending.Clear();
+		finally
+		{
+			_cancellationTokenSource?.Dispose();
+			_pending.Clear();
+		}
 	}
 
 	private readonly record struct KeyUsage(string Key, string? CustomGroup);

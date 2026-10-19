@@ -7,3 +7,6 @@ dotnet_separate_import_directive_groups = false
 indent_style = tab
 indent_size = 4
 max_line_length = 100
+
+[*.cs]
+dotnet_diagnostic.VSTHRD003.severity = none
