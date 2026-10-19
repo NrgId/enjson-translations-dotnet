@@ -28,9 +28,9 @@ public record EnJsonTranslationsOptions
 	public string ApiKey { get; set; } = "";
 
 	/// <summary>
-	///     Cache duration in minutes.
+	///     Cache duration in seconds.
 	/// </summary>
-	public int CacheMinutes { get; set; } = 5;
+	public int CacheSeconds { get; set; } = 300;
 
 	/// <summary>
 	///     HTTP timeout in seconds.
