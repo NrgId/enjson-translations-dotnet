@@ -46,7 +46,7 @@ internal class EnJsonProvider : IEnJsonProvider
 		_errorListener = errorListener;
 		_memoryCacheEntryOptions = new MemoryCacheEntryOptions
 		{
-			AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_options.Value.CacheSeconds),
+			AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_options.Value.CacheSeconds),
 		};
 
 		if (string.IsNullOrWhiteSpace(_options.Value.ProjectId))
