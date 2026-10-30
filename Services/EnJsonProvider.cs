@@ -302,6 +302,10 @@ internal class EnJsonProvider : IEnJsonProvider
 
 			return (remoteSource, cacheable);
 		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			throw;
+		}
 		catch (Exception e)
 		{
 			_errorListener.OnError(EnJsonErrorSources.TranslationProvider, null, e, null);
